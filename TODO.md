@@ -29,26 +29,24 @@ below that depends on one should start until it is answered.
       ship either way.
 - [ ] **Pass the leash in v1, with 2 or 3 seats?** (§16.5) — sets
       `max_local_players`.
-- [ ] **Bosses** (§16.6) — keep Chalupa next to Dulce's chihuahua heroine?
+- [ ] **Bosses** (§16.6) — keep Chalupa next to Dolce's chihuahua heroine?
       Five bosses in v1, or two?
 - [ ] **Daily seed day boundary** (§16.7) — local midnight or UTC.
 - [ ] **Assisted walks** (§16.8) — their own leaderboard tab, or a badge only.
 
 ## Discrepancies found while planning
 
-- [ ] The folder's `README.md` says `# julios_walk`, but the folder and id are
-      `capitans_walk`. Confirm and fix it along with the title (§16.1).
+- [x] Replace the stale `# julios_walk` README header with the current working
+      title. Final spelling and permanent save-directory names remain blocked (§16.1).
 - [ ] `capitans.jpg` sits at the folder root, so Godot imports it and every
       export preset ships it. Move it to `reference/` with a `.gdignore`, or
       exclude it from the presets.
-- [ ] The project targets Godot **4.7**, but this machine has **4.6.2**
-      (`/usr/bin/godot`). Install 4.7 before trusting any test result.
-- [ ] `menu_order = 11` assumes Dulce's Adventure (`9`) and Sailor Man (`10`)
-      keep their planned slots. Both are design-only so far. Keep `11` anyway so
-      the order doesn't shift later.
-- [ ] `control_bindings` are keyboard-only. The gamepad is polled in
-      `gameplay.gd`, as Cube Trials does, so gamepad buttons are not rebindable
-      in Settings. Accept that, or raise it as framework data.
+- [x] Verify the required engine: implementation and regression checks use
+      Godot **4.7.2** on Windows, rather than the planning machine's older engine.
+- [x] Keep `menu_order = 11`: Dolce's Adventure occupies `9` and Sailor Man `10`.
+- [ ] Future `control_bindings` are keyboard-only. Gamepad input is not built
+      yet; its planned polling would not make buttons rebindable in Settings.
+      Accept that, or raise it as framework data before Milestone 3.
 - [ ] The best-walks table and photo mode are game-owned screens inside the
       results flow, not framework screens. Check they fit the shell's results
       panel before building them (Milestone 8).
@@ -61,44 +59,59 @@ As soon as `game.gd` exists, `GameCatalog` loads it and every framework suite
 sweeps it. Start with a stub that passes them, and keep them green from here on.
 
 - [ ] Commit `DESIGN.md` and this `TODO.md` to the game repository.
-- [ ] A folder `AGENTS.md` with game-specific agent notes, as Chicken Pit has.
-- [ ] `capitans_walk_options.gd` — constants-only: `GAME_ID`, tunable keys (§10),
+- [x] A folder `AGENTS.md` with game-specific agent notes, as Chicken Pit has.
+- [x] `capitans_walk_options.gd` — constants-only: `GAME_ID`, tunable keys (§10),
       binding keys (§3.2, §10), with empty `ROUTES`, `WALKERS`, store and gallery for now.
-- [ ] `game.gd` — minimal manifest (§11.4): id, title, tagline, `menu_order = 11`,
+- [x] `game.gd` — minimal manifest (§11.4): id, title, prototype tagline, `menu_order = 11`,
       `CONTROL_STYLE_CUSTOM_KEYS`, `uses_shell_round_rules = false`,
       `supports_cpu_opponent = false`, tunables, bindings. Leave multiplayer off
       until Milestone 9.
-- [ ] `gameplay.tscn` (inherits `game_shell.tscn`) + `gameplay.gd` (`extends
-      GameShell`, `game_id()`, `super(value)` in the reduced-motion and
-      intense-effects overrides).
-- [ ] A `tests/` folder and a smoke test that loads the manifest by path.
-- [ ] `godot --headless --path . --import`
+- [x] `gameplay.tscn` (inherits `game_shell.tscn`) + `gameplay.gd` (`extends
+      GameShell`, `game_id()`). Shared accessibility hooks are inherited: this
+      debug view adds no decorative motion or intense effects to override.
+- [x] A `tests/` folder and a smoke test that loads the manifest by path.
+- [x] `godot --headless --path . --import`
+- [x] An early, clearly labelled walker-only tutorial video and poster through
+      the shared recorder; the complete dog/leash lesson remains Milestone 9.
 - [ ] **Exit:** all 15 framework suites exit 0 with `--game=all`, and
       `godot --path . -- --game=capitans_walk` opens the stub.
 
+All 15 suites now pass assertions and exit 0; normal standalone boot through
+Play/Instructions to a live walker also passes. Keep the exit unchecked until
+batched headless Lives/Single-game checks consistently avoid their shutdown
+resource leaks (`ui_back.wav` identified in Lives). Expected rejected-input/
+damaged-backup diagnostics are separate from those cleanup errors.
+
 ## Milestone 1 — Physics spike (§3) ⚠ riskiest
 
-- [ ] `walk/input_frame.gd` — `{q, w, o, p: 0..1, whistle}`.
-- [ ] `walk/walker_body.gd` (`RefCounted`, 120 Hz, every constant at the top):
-  - [ ] Verlet particles: head, neck, hip, knees, ankles, toes, hand
-  - [ ] Bone distance constraints and joint angle limits (no forward knees)
-  - [ ] Joint motors: Q/W thighs, O/P knees, opposing keys cancel, analogue strength
-  - [ ] A relaxed neutral stance with no input, which stands indefinitely on flat ground
-  - [ ] Ground polyline contacts with per-surface friction
-  - [ ] Lateral sway `z` (§3.3): inverted pendulum, stance spring by contact
+- [x] `walk/input_frame.gd` — `{q, w, o, p: 0..1, whistle}`, including explicit
+      rejection of nonfinite strengths.
+- [x] `walk/walker_body.gd` (`RefCounted`, 120 Hz, every constant at the top):
+  - [x] Verlet particles: head, neck, hip, knees, ankles, toes, hand
+  - [x] Bone distance constraints and joint angle limits (no forward knees)
+  - [x] Joint motors: Q/W thighs, O/P knees, opposing keys cancel, analogue strength
+  - [x] A relaxed neutral stance with no input; verified for 100 simulated seconds
+  - [x] Ground polyline contacts with per-surface friction
+  - [x] Lateral sway `z` (§3.3): inverted pendulum, stance spring by contact
         phase, foot plants with a catch-step
-  - [ ] End detection: fall (head or neck contact, or torso past 80° for 0.5 s),
+  - [x] End detection: fall (head or neck contact, or torso past 80° for 0.5 s),
         off the path; a knee-scoot is not a fall
-  - [ ] Distance as the furthest hip x
-- [ ] `walk/walker_profiles.gd` — Sam only for now.
-- [ ] `tools/physics_spike.tscn` — debug 2D draw of the particles, the path
+  - [x] Distance as the furthest hip x
+- [x] `walk/walker_profiles.gd` — Sam only for now.
+- [x] `tools/physics_spike.tscn` — debug 2D draw of the particles, the path
       edges and the `z` gauge, with live keys. Dev-only.
-- [ ] `tests/walker_body_test.gd` — stance, scripted gait ≥ 10 m, end rules.
-- [ ] `tests/determinism_test.gd` — same seed and inputs → identical state at 60 s.
+- [x] `tests/walker_body_test.gd` — stance, scripted gait ≥ 10 m, end rules.
+- [x] `tests/determinism_test.gd` — same seed and inputs → identical state at 60 s;
+      moving gait at 30/60/144 render FPS, with no discarded hitch time.
 - [ ] **Exit:** a playtest with at least three people. Record here how long a first-time
       player takes to reach 5 m (target ≤ 2 min), a practised player's best
       (target 50 m) and whether the sideways falls felt fair. Tune the unlock
       distance (§5.2) from these numbers before moving on.
+
+Automated baseline only: binary Q+O → Q+P → W+P → W+O, each held for 12 ticks
+(0.1 s), walks **13.17 m in 100 simulated seconds**. Maximum observed bone error
+is about **0.0088 m**. No three-person playtest, beginner timing, practised 50 m
+result or human fairness verdict has been recorded.
 
 ## Milestone 2 — Leash and Capitan, grey box (§4)
 
@@ -125,16 +138,20 @@ sweeps it. Start with a stub that passes them, and keep them green from here on.
 - [ ] Scoring and Capitan's verdict (one to five wags).
 - [ ] Assists: Easy legs macro (two keys), Steady, Walk speed, Long warnings.
 - [ ] `walk/dog_profiles.gd` — Capitan only for now.
-- [ ] `input/key_source.gd`, `input/pad_source.gd` (analogue triggers),
-      `input/touch_pads.gd` (four pads, independent multitouch).
+- [x] `input/key_source.gd` — four independent, rebindable keyboard strengths.
+- [ ] `input/pad_source.gd` (analogue triggers).
+- [ ] `input/touch_pads.gd` (four pads, independent multitouch).
 - [ ] `ui/walk_hud.gd` — distance, happiness bone, balance bubble, combo,
       telegraph bubble; numbers and icons, never colour alone.
-- [ ] `gameplay.gd` hooks (§11.3): one shell round = one walk; shell end-of-round
+- [x] Walker-only `gameplay.gd` hooks (§11.3): one shell round = one practice;
+      distance/ending reaches shell results, stats and highlights.
+- [ ] Extend those hooks to the complete dog/leash walk; shell end-of-round
       path; `_round_totals`, `_player_stats`, `_describe_round_outcome`,
       `_round_highlight_summary`.
-- [ ] Restart resets the model and view in place in under 2 s.
+- [x] Restart resets the model and view in place in under 2 s.
+- [x] `tests/capitans_scene_test.gd` (walker-only first pass), headless and windowed.
 - [ ] `tests/dog_brain_test.gd`, `tests/walk_state_test.gd` (including Easy legs
-      ≥ four keys), `tests/capitans_scene_test.gd` (first pass).
+      ≥ four keys), and gamepad/touch scene coverage.
 - [ ] **Exit:** a full walk on a flat grey-box path to the results panel, by
       keyboard, gamepad and touch. Framework suites green.
 
@@ -240,7 +257,9 @@ sweeps it. Start with a stub that passes them, and keep them green from here on.
       offering Easy legs after three falls before 3 m.
 - [ ] Capitan's real barks (blocked on §16.2); narrator voice-over (§16.4).
 - [ ] Credits, including Capitan and his owner.
-- [ ] Tutorial video + poster (`tools/tutorial_driver.gd`, `record_tutorials.ps1`).
+- [ ] Complete walk tutorial video + poster (`tools/tutorial_driver.gd`,
+      `record_tutorials.ps1`). An original physics-only clip already satisfies
+      current discovery; re-record this after dog/leash gameplay exists.
 
 ## Milestone 10 — Polish and integration (§12, §14)
 
@@ -256,7 +275,7 @@ sweeps it. Start with a stub that passes them, and keep them green from here on.
 - [ ] A remote for this repository → `.gitmodules` + gitlink (two commits).
 - [ ] Root `AGENTS.md`: games table, submodules, options files, test table,
       feature tags, blurb. Update `godot-base/README.md` if it lists games.
-- [ ] Write the folder `README.md` properly.
+- [x] Write the folder `README.md` for the current prototype; update it for release.
 - [ ] **Exit:** all framework suites + all game suites exit 0 with
       `--game=all`; window suites run without `--headless`.
 

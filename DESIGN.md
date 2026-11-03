@@ -361,7 +361,7 @@ achievement.
 
 | Boss | Pattern |
 | --- | --- |
-| **Chalupa** (Park) | A tiny, extremely angry chihuahua barks in rhythms. Barks 1–2 trigger Capitan's flinch-pulls. Bark 3 is a charge: she circles, Capitan circles to hide behind your legs, and the **leash wraps your legs**. Step over the wrap (a high-thigh step on the right beat) to unwind it. Three wraps and you are gift-wrapped (§3.4). She is an original character, **not** Dulce from Dulce's Adventure. |
+| **Chalupa** (Park) | A tiny, extremely angry chihuahua barks in rhythms. Barks 1–2 trigger Capitan's flinch-pulls. Bark 3 is a charge: she circles, Capitan circles to hide behind your legs, and the **leash wraps your legs**. Step over the wrap (a high-thigh step on the right beat) to unwind it. Three wraps and you are gift-wrapped (§3.4). She is an original character, **not** Dolce from Dolce's Adventure. |
 | **The Seagull Gang** (Beach) | Three gulls dive for your sandwich in turn: sideways tugs as Capitan defends you |
 | **The Crosswalk** (City) | A countdown walk-light. Cross before it turns, among commuters who part only for a steady walker |
 | **The Snowplough** (Snowy) | A plough pushes a wave of snow down the hill. Keep walking uphill ahead of it, braced against the sideways spray |
@@ -965,7 +965,7 @@ localisation; a "Capitan walks you" mode where the player is the dog.
    later? Who voices it?
 5. **Pass the leash.** Is hot seat in v1, and with 2 or 3 seats?
 6. **Boss roster and names.** Keep Chalupa (and is a chihuahua boss fine next to
-   Dulce's Adventure, whose heroine is a chihuahua mix)? Are five bosses in v1 or
+   Dolce's Adventure, whose heroine is a chihuahua mix)? Are five bosses in v1 or
    two?
 7. **Daily seed day boundary.** Local midnight (friendlier) or UTC (fair across
    time zones on a future online board)?

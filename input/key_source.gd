@@ -11,5 +11,7 @@ func sample() -> InputFrame:
 	return InputFrame.new(
 		Input.get_action_strength(Options.Q), Input.get_action_strength(Options.W),
 		Input.get_action_strength(Options.O), Input.get_action_strength(Options.P),
-		Input.is_action_pressed(Options.WHISTLE)
+		Input.is_action_pressed(Options.WHISTLE),
+		Input.get_action_strength(Options.EASY_LEFT),
+		Input.get_action_strength(Options.EASY_RIGHT)
 	)

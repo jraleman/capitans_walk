@@ -8,8 +8,8 @@ const WalkerTests = preload("res://games/capitans_walk/tests/walker_body_test.gd
 const Walk = preload("res://games/capitans_walk/walk/walk_state.gd")
 const Dog = preload("res://games/capitans_walk/walk/dog_brain.gd")
 const STEPS: Array[Dictionary] = [
-	{"time": 0.0, "title": "Dog + leash grey-box prototype",
-		"body": "Real joint motors and a spring-damper rope. Capitan is a placeholder, not final art."},
+	{"time": 0.0, "title": "Seeded Park grey-box prototype",
+		"body": "Real joint motors, rope and terrain. Capitan is a placeholder, not final art."},
 	{"time": 4.0, "title": "Thighs and calves",
 		"body": "Q / W swing thighs. O / P bend and straighten knees. Equal opposing keys cancel."},
 	{"time": 8.0, "title": "Plant before the lunge",
@@ -17,11 +17,11 @@ const STEPS: Array[Dictionary] = [
 	{"time": 12.0, "title": "Whistle calls him back",
 		"body": "Space recalls Capitan after 0.3 s. Six-second cooldown; release before calling again."},
 	{"time": 14.0, "title": "Let go to settle",
-		"body": "Release all four keys to relax the motors. The gauge shows sideways sway and the edge."},
+		"body": "Grass rings are safe sniff stops. Puddles ahead lower foot grip; slopes use real gravity."},
 	{"time": 18.0, "title": "Restart, not a punishment",
 		"body": "R resets the walker and distance immediately, even after a fall. Escape pauses."},
-	{"time": 21.0, "title": "Now playtest the legs",
-		"body": "Grey box only. Human fairness testing, routes, touch controls and 3D art are still pending."},
+	{"time": 21.0, "title": "Choose your legs",
+		"body": "Game settings offer two-key Easy legs and longer warnings. Rhythm points survive a fall."},
 ]
 
 var _gait_start_tick := -1
@@ -55,7 +55,10 @@ func duration() -> float:
 
 
 func settings_overrides() -> Dictionary:
-	var overrides := {Options.STEADY_KEY: 0.0, Options.WALK_SPEED_KEY: 100}
+	var overrides := {
+		Options.STEADY_KEY: 0.0, Options.WALK_SPEED_KEY: 100,
+		Options.EASY_LEGS_KEY: false, Options.LONG_WARNINGS_KEY: false,
+	}
 	for binding: Dictionary in Options.CONTROL_BINDINGS:
 		overrides[binding["key"]] = binding["default"]
 	return overrides
@@ -120,3 +123,5 @@ func _release_keys() -> void:
 	for action in Options.LEG_ACTIONS:
 		Input.action_release(action)
 	Input.action_release(Options.WHISTLE)
+	Input.action_release(Options.EASY_LEFT)
+	Input.action_release(Options.EASY_RIGHT)

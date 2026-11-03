@@ -236,6 +236,17 @@ func ground_height(x: float) -> float:
 	return lerpf(start.y, finish.y, (x - start.x) / (finish.x - start.x))
 
 
+func ground_slope(x: float) -> float:
+	var segment := _ground_segment(x)
+	var line := _ground[segment + 1] - _ground[segment]
+	return line.y / line.x
+
+
+## Copies keep read-only terrain views from changing the next contact solve.
+func ground_profile() -> PackedVector2Array:
+	return _ground.duplicate()
+
+
 ## Authored surfaces replace friction, never the contact or joint solver.
 func ground_friction(x: float) -> float:
 	for surface in _surfaces:
@@ -288,6 +299,7 @@ func snapshot() -> Dictionary:
 		"foot_z": foot_z.duplicate(), "z": z, "z_velocity": z_velocity,
 		"distance": distance, "steps": steps, "ticks": ticks, "seed": seed_value,
 		"end_cause": end_cause, "accumulator": _accumulator, "tilt_seconds": _tilt_seconds,
+		"ground": _ground.duplicate(), "surfaces": _surfaces.duplicate(true),
 	}
 
 

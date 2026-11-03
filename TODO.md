@@ -44,9 +44,9 @@ below that depends on one should start until it is answered.
 - [x] Verify the required engine: implementation and regression checks use
       Godot **4.7.2** on Windows, rather than the planning machine's older engine.
 - [x] Keep `menu_order = 11`: Dolce's Adventure occupies `9` and Sailor Man `10`.
-- [ ] Future `control_bindings` are keyboard-only. Gamepad input is not built
-      yet; its planned polling would not make buttons rebindable in Settings.
-      Accept that, or raise it as framework data before Milestone 3.
+- [x] `control_bindings` remain keyboard-only. The owner selected **fixed**
+      gamepad controls rather than extending shared Settings. The game-owned
+      joystick adapter preserves analogue triggers; gamepad buttons are not rebindable.
 - [ ] The best-walks table and photo mode are game-owned screens inside the
       results flow, not framework screens. Check they fit the shell's results
       panel before building them (Milestone 8).
@@ -139,45 +139,88 @@ scene and spike share this model, and `--walker-only` retains the earlier spike.
 - [x] `walk/walk_state.gd` — owns body, leash and dog; fixed step with an
       accumulator; distance; ending and its cause.
       Brought forward to keep Milestone 2 on one deterministic clock.
-- [ ] The remaining distractions: hydrant drag, pigeon zigzag, food-smell drag,
+- [x] The remaining distractions: hydrant drag, pigeon zigzag, food-smell drag,
       sit-down protest, each with a caption, an icon and a sound.
-- [ ] Happiness: fill and drain table, pull, distraction-rate and score multipliers.
-- [ ] Sniff spots: standing still nearby lets him sniff.
-- [ ] Perfect-rhythm combo: good-stride detection, tiers, break rules, banking.
-- [ ] Scoring and Capitan's verdict (one to five wags).
-- [ ] Assists: Easy legs macro (two keys), Steady, Walk speed, Long warnings.
-- [ ] `walk/dog_profiles.gd` — Capitan only for now.
+- [x] Happiness: available fill/drain sources, pull, distraction-rate and score
+      multipliers. Item/event fills remain with Milestones 4 and 6.
+- [x] Sniff spots: sustained physical settling nearby lets him sniff.
+- [x] Perfect-rhythm combo: good-stride detection, tiers, break rules, banking.
+- [x] Scoring and Capitan's verdict (one to five wags).
+- [x] Assists: Easy legs macro (two keys), Steady, Walk speed, Long warnings.
+- [x] `walk/dog_profiles.gd` — Capitan only for now.
 - [x] `input/key_source.gd` — four independent, rebindable keyboard strengths.
-- [ ] `input/pad_source.gd` (analogue triggers).
-- [ ] `input/touch_pads.gd` (four pads, independent multitouch).
-- [ ] `ui/walk_hud.gd` — distance, happiness bone, balance bubble, combo,
+- [x] `input/pad_source.gd` (analogue triggers).
+- [x] `input/touch_pads.gd` (four pads, independent multitouch).
+- [x] `ui/walk_hud.gd` — shell headline distance, happiness bone, balance bubble, combo,
       telegraph bubble; numbers and icons, never colour alone.
 - [x] Grey-box `gameplay.gd` hooks (§11.3): one shell round = one practice;
       distance/ending reaches shell results, stats and highlights.
-- [ ] Extend those hooks to the complete dog/leash walk; shell end-of-round
+- [x] Extend those hooks to this keyboard dog/leash walk; shell end-of-round
       path; `_round_totals`, `_player_stats`, `_describe_round_outcome`,
       `_round_highlight_summary`.
 - [x] Restart resets the model and view in place in under 2 s.
 - [x] `tests/capitans_scene_test.gd` (grey-box pass), headless and windowed.
 - [x] `tests/dog_brain_test.gd` and initial `tests/walk_state_test.gd`:
       seeded events/recall, full 60 s state, moving FPS/hitch checks and restart.
-- [ ] Extend `tests/walk_state_test.gd` for Easy legs ≥ four keys, and add
-      gamepad/touch scene coverage.
-- [ ] **Exit:** a full walk on a flat grey-box path to the results panel, by
+- [x] Extend `tests/walk_state_test.gd` for Easy legs >= four keys, rhythm,
+      happiness, all fixed state at 30/60/144 FPS and rejected dog data.
+- [x] Add gamepad/touch scene coverage with their adapters.
+- [x] **Exit:** a full walk on a flat grey-box path to the results panel, by
       keyboard, gamepad and touch. Framework suites green.
+
+All three input adapters are playable through genuine shared results: all five
+seeded moods, authored safe rings, happiness, banked rhythm tiers and four live
+assists. Easy legs reaches **4.76 m in 30 s**, equal to its four-key script;
+current 60-happiness bracing is **8.59 degrees at 17.52 N**. The HUD, result
+score/verdict and stat details have rendered coverage, including portrait bounds.
+Physical-key, joystick and multitouch events drive the same **2.13 m / 1571 tick**
+walk into a real off-path ending, with identical complete model/RNG/scoring state.
+The eight game suites cover trigger feathering, focus/disconnect/pause cleanup,
+native mouse emulation, Easy touch, instant restart, nested Settings via Start
+and all three touch layouts with non-overlapping buttons outside the walker view.
+This is automated scene/render coverage, not physical controller/mobile testing
+or the three-person fairness playtest. Progression tuning remains blocked.
+Treats, surprise events, other routes, progression and final art remain later
+work. The Park terrain foundation follows below.
 
 ## Milestone 4 — Routes (§5.1, §5.3)
 
-- [ ] `walk/route_chunks.gd` — chunk format: length, ground profile, surfaces,
+- [x] `walk/route_chunks.gd` — chunk format: length, ground profile, surfaces,
       sniff spots, item slots, hazard slots, tier.
-- [ ] `walk/route_generator.gd` — seeded and endless; sniff spacing, hazard
-      spacing per tier, set-piece distances.
-- [ ] `walk/hazards.gd` — puddle, sprinkler, jogger, pigeon flock, other dog, slope.
-- [ ] The Park chunk pool (about 12 chunks across 3 tiers).
+- [x] `walk/route_generator.gd` — seeded and endless; sniff spacing, full hazard
+      interval spacing per tier, reserved set-piece distances.
+- [x] `walk/hazards.gd` — real puddle grip/splash contact edges and slope gravity.
+- [x] Moving Park hazards: sprinkler, jogger, pigeon flock and other dog.
+- [x] The Park pool (12 terrain plus 4 moving-encounter templates across 3 tiers).
 - [ ] Items (§7.1): treat, treat bag (Calm mode), tennis ball (Super-steady).
-- [ ] `tools/chunk_preview.tscn` — draw one chunk and its slots. Dev-only.
-- [ ] `tests/route_generator_test.gd`.
-- [ ] **Exit:** an endless Park walk in grey box, the same route for the same seed.
+- [x] `tools/chunk_preview.tscn` — draw one chunk and its slots. Dev-only.
+- [x] `tests/route_generator_test.gd`.
+- [x] `tests/hazards_test.gd` and scene coverage of warnings, choices, real forces,
+      recall/Long warnings, bounded state and rendered actor fixtures.
+- [ ] **Exit:** the complete Park hazard/item set in an endless grey-box walk,
+      the same route for the same seed.
+
+The surface-only Park foundation is playable through the inherited shell.
+Streaming/backtracking is bounded and seeded; rings stay <=40 m apart and >=6 m
+from full hazard intervals and reserved set-piece positions, including adjacent
+event/boss cells. Reservations are explicitly inactive, not playable encounters.
+Seed 0 repeats on normal Restart; the dev preview can inspect other seeds.
+Models/scene input walk seed 1 into actual water at **31.51 m / 23457 ticks**
+without injected poses, scores or forward motion. Explicit terrain-placement
+fixtures separately cover surface rendering; they are not distance benchmarks.
+The original flat walker gait remains **13.17 m / 100 s**. All nine game suites,
+the 15 framework suites, normal launch and both baseline spikes pass.
+The moving-hazard slice adds 0.8 s warnings (doubled by Long warnings), repeated
+sprinkler water sweeps, a genuinely backward jogger drag, three flock beats and
+settled play/greeting sniffs versus walking tugs. Ordinary moods wait their turn.
+Whistle cancels interest after 0.3 s, never the water; quiet earlier whistles
+grant no cooldown-long immunity. A genuine seed-731 gait and scene input walk
+reach the first jogger at **52.09 m / 40595 ticks**, with **39 N backward rope**
+and no injected pose, distance or score. Explicit actor fixtures separately
+cover warning/active presentation from portrait to ultrawide.
+All ten game suites and 15 framework suites pass. Milestone 4 remains open for
+pickups; surprise events/bosses and the human playtest/progression-tuning gate
+remain untouched.
 
 ## Milestone 5 — The 2.5D world (§8)
 

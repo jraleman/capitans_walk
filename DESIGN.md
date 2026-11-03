@@ -306,6 +306,24 @@ spots, item slots, hazard slots and a difficulty tier. The generator obeys these
   and a **boss** at 250 m and every 250 m after it *(tune)*.
 - The same seed always produces the same route. The daily challenge uses this (§7.2).
 
+**Implemented Park foundation:** the Park currently has sixteen 20 m templates
+across the three tiers, with a flat first chunk preserving the leash lesson.
+Per-cell seeded selection supports a bounded actor-centred window and exact
+backtracking without consuming dog RNG. Puddles use real 0.30-friction contacts;
+slopes use the existing contact solver plus gravity along the dog's path.
+The renderer reads exact vertices, rings and surface slots. Safe rings remain
+at least 6 m clear of full hazard intervals and reserved encounter positions,
+including across seams and adjacent reservations. Event/boss positions reserve
+quiet space only; pickups, surprise events and bosses remain unimplemented.
+Sprinkler sweeps, approaching joggers, environmental pigeon flocks and friendly
+dogs now have spatial triggers, fixed-clock warnings, original cues and physical
+water/steering/rope effects. Settling can earn one play/greeting sniff per visit.
+Long warnings doubles telegraphs; actual recall cancels interest, not water.
+Ordinary moods wait during an encounter, and cooldown is not immunity to an
+unseen hazard. Their retained state is bounded with the terrain window.
+The main prototype repeats seed 0; a player seed selector/daily walk is not built.
+These authored tier bands do not settle progression tuning or the human gate.
+
 ### 5.2 The routes (shared level selector)
 
 Use the manifest's `levels` with achievement gates, like Cube Trials. Each
@@ -751,8 +769,11 @@ that carries meaning has a caption (§9.5).
 Bindings (§3.2) all use the prefix `controls/capitans_walk_`: `q`, `w`, `o`, `p`,
 `whistle`, `restart`, `photo`, plus `easy_left` and `easy_right` (Easy legs).
 The four leg keys are `movement: true`. In hot seat every seat shares P1's keys
-(`local_multiplayer_turns`). The gamepad is polled in `gameplay.gd`, as Cube Trials
-does.
+(`local_multiplayer_turns`). The owner accepted fixed gamepad controls rather
+than extending the framework's keyboard-only rebinding data. The implementation
+collects Godot joystick events in a game-owned adapter, retaining analogue
+trigger strengths and releasing state on focus loss or disconnection. D-pad
+left/right choose Easy legs; the four manual motors remain available.
 
 ---
 

@@ -28,8 +28,16 @@ const LEG_BINDINGS: Array[String] = [
 ]
 const RESTART_BINDING := "controls/capitans_walk_restart"
 const WHISTLE_BINDING := "controls/capitans_walk_whistle"
+const EASY_BINDINGS: Array[String] = [
+	"controls/capitans_walk_easy_left", "controls/capitans_walk_easy_right",
+]
 
 const TUNABLES: Array[Dictionary] = [
+	{
+		"key": EASY_LEGS_KEY, "type": GameManifest.OPTION_TOGGLE, "default": false,
+		"title": "Easy legs", "heading": "Walking assists - live",
+		"description": "Two keys play one motor stride per leg choice. Release to stop.",
+	},
 	{
 		"key": STEADY_KEY, "default": 0.0, "min": 0.0, "max": 1.0,
 		"step": 0.05, "format": GameManifest.FORMAT_PERCENT,
@@ -44,6 +52,21 @@ const TUNABLES: Array[Dictionary] = [
 			{"value": 100, "title": "100%"},
 			{"value": 85, "title": "85%"},
 			{"value": 70, "title": "70%"},
+		],
+	},
+	{
+		"key": LONG_WARNINGS_KEY, "type": GameManifest.OPTION_TOGGLE, "default": false,
+		"title": "Long warnings", "heading": "Walking assists - live",
+		"description": "Doubles every dog telegraph, including the remaining visible warning.",
+	},
+	{
+		"key": TOUCH_LAYOUT_KEY, "type": GameManifest.OPTION_CHOICE, "default": 0,
+		"title": "Touch layout", "heading": "Touch controls",
+		"description": "Split the motor pads between thumbs, or group them under one hand.",
+		"choices": [
+			{"value": 0, "title": "Thumbs"},
+			{"value": 1, "title": "Left-handed"},
+			{"value": 2, "title": "Right-handed"},
 		],
 	},
 ]
@@ -78,6 +101,16 @@ const CONTROL_BINDINGS: Array[Dictionary] = [
 		"key": RESTART_BINDING, "action": RESTART, "default": KEY_R,
 		"title": "Restart", "player": 0, "heading": "The walk",
 		"description": "Reset the walker, Capitan and leash immediately, even after a fall.",
+	},
+	{
+		"key": EASY_BINDINGS[0], "action": EASY_LEFT, "default": KEY_A,
+		"title": "Easy left leg", "player": 0, "heading": "Easy legs",
+		"description": "With Easy legs on, bend then plant the left leg. Both Easy keys cancel.",
+	},
+	{
+		"key": EASY_BINDINGS[1], "action": EASY_RIGHT, "default": KEY_D,
+		"title": "Easy right leg", "player": 0, "heading": "Easy legs",
+		"description": "With Easy legs on, bend then plant the right leg. Release before repeating.",
 	},
 ]
 

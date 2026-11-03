@@ -113,6 +113,8 @@ func _test_lunge() -> void:
 		"Double stance must survive the lunge and its return toward the centre.")
 	_expect(striding_sway > braced_sway + 0.02,
 		"The same seeded lunge must produce more lateral drift during a stride.")
+	_expect(striding.dog.sniffs == 0,
+		"A passing gait's momentary foot plants must not count as stopping at a sniff spot.")
 
 
 func _expect(condition: bool, message: String) -> void:

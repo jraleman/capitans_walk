@@ -5,6 +5,8 @@ extends SceneTree
 const Options = preload("res://games/capitans_walk/capitans_walk_options.gd")
 const Body = preload("res://games/capitans_walk/walk/walker_body.gd")
 const InputFrame = preload("res://games/capitans_walk/walk/input_frame.gd")
+const Walk = preload("res://games/capitans_walk/walk/walk_state.gd")
+const Dog = preload("res://games/capitans_walk/walk/dog_brain.gd")
 
 var _failures := PackedStringArray()
 
@@ -21,6 +23,9 @@ func _run() -> void:
 	var save_mode := save_timer.process_mode
 	save_timer.process_mode = Node.PROCESS_MODE_DISABLED
 	save_timer.stop()
+	var test_values: Dictionary = settings.get("_values")
+	test_values[Options.STEADY_KEY] = 0.0
+	test_values[Options.WALK_SPEED_KEY] = 100
 	GameCatalog.select(Options.GAME_ID)
 	session.call("configure_single_player")
 	var packed := load("res://games/capitans_walk/gameplay.tscn") as PackedScene
@@ -33,9 +38,12 @@ func _run() -> void:
 	await process_frame
 	await process_frame
 	var body: Body = game.get("_body")
+	var walk: Walk = game.get("_walk")
 	var view := game.get("_view") as Control
 	_expect(bool(game.get("_round_active")) and view != null,
 		"Gameplay must start with its model bound to the debug view.")
+	_expect(walk.body == body and view.get("_walk") == walk,
+		"The real gameplay and renderer must share one coupled dog/leash controller.")
 	_expect((game.get_node("%RoundTimer") as Timer).is_stopped(),
 		"The shell timer must not end a self-paced walk.")
 
@@ -67,6 +75,28 @@ func _run() -> void:
 	await process_frame
 	settings.call("set_binding_key", Options.LEG_BINDINGS[0], old_key, Options.GAME_ID)
 
+	var old_whistle := int(settings.call("binding_keycode", Options.WHISTLE_BINDING))
+	_expect(bool(settings.call("set_binding_key", Options.WHISTLE_BINDING, KEY_X, Options.GAME_ID)),
+		"Whistle must be rebindable through the same controls screen.")
+	press = InputEventKey.new()
+	press.physical_keycode = KEY_X
+	press.pressed = true
+	Input.parse_input_event(press)
+	await process_frame
+	await process_frame
+	game.call("_update_round", Body.STEP, 0.0)
+	_expect(walk.dog.whistles == 1 and (game.get("_frame") as InputFrame).whistle
+		and view.get("_whistle_key") == "X",
+		"The rebound key must trigger recall: whistles=%d, frame=%s, label=%s."
+		% [walk.dog.whistles, (game.get("_frame") as InputFrame).whistle,
+			view.get("_whistle_key")])
+	press = InputEventKey.new()
+	press.physical_keycode = KEY_X
+	press.pressed = false
+	Input.parse_input_event(press)
+	await process_frame
+	settings.call("set_binding_key", Options.WHISTLE_BINDING, old_whistle, Options.GAME_ID)
+
 	var live_values: Dictionary = settings.get("_values")
 	live_values[Options.STEADY_KEY] = 0.65
 	live_values[Options.WALK_SPEED_KEY] = 70
@@ -83,13 +113,32 @@ func _run() -> void:
 	game.call("open_pause_menu")
 	await process_frame
 	ticks = body.ticks
+	var paused_walk := walk.snapshot()
 	await process_frame
 	await process_frame
-	_expect(paused and body.ticks == ticks, "Pausing must freeze the model, not just the HUD.")
+	_expect(paused and body.ticks == ticks and walk.snapshot() == paused_walk,
+		"Pausing must freeze the dog, cooldown and rope as well as the walker.")
 	var pause_menu := game.get("_pause_menu") as Node
 	pause_menu.call("resume")
 	await process_frame
 	_expect(not paused, "The normal pause menu must resume the walk.")
+
+	for tick in Dog.FIRST_SQUIRREL_MAX + 1:
+		if walk.dog.state == Dog.SQUIRREL_WARNING:
+			break
+		game.call("_update_round", Body.STEP / 0.7, 0.0)
+	_expect(walk.dog.state == Dog.SQUIRREL_WARNING
+		and (game.get("_callout") as Label).text.contains("SQUIRREL"),
+		"A real warning must reach the caption: state=%s, text=%s, response=%d, whistles=%d, end=%s."
+		% [walk.dog.state, (game.get("_callout") as Label).text,
+			walk.dog.response_ticks, walk.dog.whistles, body.end_cause])
+	Input.action_press(Options.WHISTLE)
+	for tick in Dog.WHISTLE_RESPONSE_TICKS + 1:
+		game.call("_update_round", Body.STEP / 0.7, 0.0)
+	Input.action_release(Options.WHISTLE)
+	_expect(walk.dog.state == Dog.TROT and walk.dog.recalls == 2
+		and walk.dog.cooldown_ticks > 0,
+		"Real action input must cancel the warned distraction after the delayed recall.")
 
 	body.z = 0.50
 	game.call("_update_round", Body.STEP / 0.7, 0.0)
@@ -106,8 +155,9 @@ func _run() -> void:
 	game.call("_unhandled_input", restart)
 	_expect(Time.get_ticks_usec() - started < 2000000 and game.get("_view") == view
 		and game.get("_body") == body and body.distance == 0.0 and not body.is_over()
-		and bool(game.get("_round_active")),
-		"Restart from results must reset in place in under two seconds.")
+		and bool(game.get("_round_active")) and game.get("_walk") == walk
+		and walk.dog.ticks == 0 and walk.dog.cooldown_ticks == 0 and walk.leash.tension == 0.0,
+		"Restart from results must reset every coupled model in place in under two seconds.")
 	game.set("_round_active", false)
 
 	var original_size := get_root().size
@@ -137,6 +187,7 @@ func _run() -> void:
 	save_timer.process_mode = save_mode
 	for action in Options.LEG_ACTIONS:
 		Input.action_release(action)
+	Input.action_release(Options.WHISTLE)
 	await create_timer(0.15, true, false, true).timeout
 	if _failures.is_empty():
 		print("Capitan's Walk scene tests passed.")

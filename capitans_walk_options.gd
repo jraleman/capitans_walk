@@ -27,6 +27,7 @@ const LEG_BINDINGS: Array[String] = [
 	"controls/capitans_walk_o", "controls/capitans_walk_p",
 ]
 const RESTART_BINDING := "controls/capitans_walk_restart"
+const WHISTLE_BINDING := "controls/capitans_walk_whistle"
 
 const TUNABLES: Array[Dictionary] = [
 	{
@@ -69,9 +70,14 @@ const CONTROL_BINDINGS: Array[Dictionary] = [
 		"description": "Bend the right knee and straighten the left knee.",
 	},
 	{
+		"key": WHISTLE_BINDING, "action": WHISTLE, "default": KEY_SPACE,
+		"title": "Whistle", "player": 0, "heading": "The walk",
+		"description": "Recall Capitan after 0.3 s. Six-second cooldown; release to call again.",
+	},
+	{
 		"key": RESTART_BINDING, "action": RESTART, "default": KEY_R,
 		"title": "Restart", "player": 0, "heading": "The walk",
-		"description": "Reset the walker immediately, including after a fall.",
+		"description": "Reset the walker, Capitan and leash immediately, even after a fall.",
 	},
 ]
 

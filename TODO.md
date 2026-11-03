@@ -58,7 +58,7 @@ below that depends on one should start until it is answered.
 As soon as `game.gd` exists, `GameCatalog` loads it and every framework suite
 sweeps it. Start with a stub that passes them, and keep them green from here on.
 
-- [ ] Commit `DESIGN.md` and this `TODO.md` to the game repository.
+- [x] Commit `DESIGN.md` and this `TODO.md` to the game repository.
 - [x] A folder `AGENTS.md` with game-specific agent notes, as Chicken Pit has.
 - [x] `capitans_walk_options.gd` — constants-only: `GAME_ID`, tunable keys (§10),
       binding keys (§3.2, §10), with empty `ROUTES`, `WALKERS`, store and gallery for now.
@@ -73,14 +73,14 @@ sweeps it. Start with a stub that passes them, and keep them green from here on.
 - [x] `godot --headless --path . --import`
 - [x] An early, clearly labelled walker-only tutorial video and poster through
       the shared recorder; the complete dog/leash lesson remains Milestone 9.
-- [ ] **Exit:** all 15 framework suites exit 0 with `--game=all`, and
+- [x] **Exit:** all 15 framework suites exit 0 with `--game=all`, and
       `godot --path . -- --game=capitans_walk` opens the stub.
 
-All 15 suites now pass assertions and exit 0; normal standalone boot through
-Play/Instructions to a live walker also passes. Keep the exit unchecked until
-batched headless Lives/Single-game checks consistently avoid their shutdown
-resource leaks (`ui_back.wav` identified in Lives). Expected rejected-input/
-damaged-backup diagnostics are separate from those cleanup errors.
+All 15 suites now pass assertions and exit 0 without shutdown resource leaks;
+normal standalone boot through Play/Instructions to a live walker also passes.
+The host's Lives/Single-game suites release UI audio before quitting, matching
+its existing test teardown pattern. Expected rejected-input/damaged-backup
+diagnostics remain separate from unexpected script or cleanup errors.
 
 ## Milestone 1 — Physics spike (§3) ⚠ riskiest
 
@@ -111,25 +111,34 @@ damaged-backup diagnostics are separate from those cleanup errors.
 Automated baseline only: binary Q+O → Q+P → W+P → W+O, each held for 12 ticks
 (0.1 s), walks **13.17 m in 100 simulated seconds**. Maximum observed bone error
 is about **0.0088 m**. No three-person playtest, beginner timing, practised 50 m
-result or human fairness verdict has been recorded.
+result or human fairness verdict has been recorded. The owner explicitly
+authorized proceeding with grey-box dog/leash work before this playtest; that
+decision does not pass the gate or authorize tuning progression distances.
 
 ## Milestone 2 — Leash and Capitan, grey box (§4)
 
-- [ ] `walk/leash.gd` — spring-damper, slack zone, clamped force, `(x, z)`
+- [x] `walk/leash.gd` — spring-damper, slack zone, clamped force, `(x, z)`
       direction, wrist-looped (never dropped).
-- [ ] The arm spring carries the leash force into the torso at shoulder height.
-- [ ] `walk/dog_brain.gd` — trot on the centre line, keeping the leash just taut.
-- [ ] One distraction end to end: the squirrel lunge, with its telegraph.
-- [ ] Tune the brace: a steady trot pull holds an 8° lean back (§4.4).
-- [ ] Whistle: ends a distraction after 0.3 s, 6 s cooldown (§4.5).
-- [ ] `tests/leash_test.gd`.
-- [ ] **Exit:** on the spike, leaning into the pull is noticeably easier than
+- [x] The arm spring carries the leash force into the torso at shoulder height.
+- [x] `walk/dog_brain.gd` — trot on the centre line, keeping the leash just taut.
+- [x] One distraction end to end: the squirrel lunge, with caption, `!` and original tone.
+- [x] Tune the brace: a steady trot pull holds an 8° lean back (§4.4).
+- [x] Whistle: ends a distraction after 0.3 s, 6 s cooldown (§4.5).
+- [x] `tests/leash_test.gd`.
+- [x] **Exit:** on the spike, leaning into the pull is noticeably easier than
       fighting it, and a lunge is survivable from double stance.
+
+Automated physical checks: a graded W+P brace holds **8.6° back at 17.3 N**;
+the same lunge peaks near **13.5°** while braced versus **78°** leaning forward.
+Double stance survives the full lunge/return; striding accumulates more sway.
+The original three-person fairness playtest remains unperformed. The gameplay
+scene and spike share this model, and `--walker-only` retains the earlier spike.
 
 ## Milestone 3 — The walk (§3.5, §4.3, §7.5–§7.6)
 
-- [ ] `walk/walk_state.gd` — owns body, leash and dog; fixed step with an
+- [x] `walk/walk_state.gd` — owns body, leash and dog; fixed step with an
       accumulator; distance; ending and its cause.
+      Brought forward to keep Milestone 2 on one deterministic clock.
 - [ ] The remaining distractions: hydrant drag, pigeon zigzag, food-smell drag,
       sit-down protest, each with a caption, an icon and a sound.
 - [ ] Happiness: fill and drain table, pull, distraction-rate and score multipliers.
@@ -143,15 +152,17 @@ result or human fairness verdict has been recorded.
 - [ ] `input/touch_pads.gd` (four pads, independent multitouch).
 - [ ] `ui/walk_hud.gd` — distance, happiness bone, balance bubble, combo,
       telegraph bubble; numbers and icons, never colour alone.
-- [x] Walker-only `gameplay.gd` hooks (§11.3): one shell round = one practice;
+- [x] Grey-box `gameplay.gd` hooks (§11.3): one shell round = one practice;
       distance/ending reaches shell results, stats and highlights.
 - [ ] Extend those hooks to the complete dog/leash walk; shell end-of-round
       path; `_round_totals`, `_player_stats`, `_describe_round_outcome`,
       `_round_highlight_summary`.
 - [x] Restart resets the model and view in place in under 2 s.
-- [x] `tests/capitans_scene_test.gd` (walker-only first pass), headless and windowed.
-- [ ] `tests/dog_brain_test.gd`, `tests/walk_state_test.gd` (including Easy legs
-      ≥ four keys), and gamepad/touch scene coverage.
+- [x] `tests/capitans_scene_test.gd` (grey-box pass), headless and windowed.
+- [x] `tests/dog_brain_test.gd` and initial `tests/walk_state_test.gd`:
+      seeded events/recall, full 60 s state, moving FPS/hitch checks and restart.
+- [ ] Extend `tests/walk_state_test.gd` for Easy legs ≥ four keys, and add
+      gamepad/touch scene coverage.
 - [ ] **Exit:** a full walk on a flat grey-box path to the results panel, by
       keyboard, gamepad and touch. Framework suites green.
 

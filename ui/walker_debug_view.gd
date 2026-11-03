@@ -4,6 +4,8 @@ extends Control
 
 const Body = preload("res://games/capitans_walk/walk/walker_body.gd")
 const InputFrame = preload("res://games/capitans_walk/walk/input_frame.gd")
+const Walk = preload("res://games/capitans_walk/walk/walk_state.gd")
+const Dog = preload("res://games/capitans_walk/walk/dog_brain.gd")
 const INK := Color("23252b")
 const SKY := Color("bfe3f0")
 const PAVEMENT := Color("c9c1b4")
@@ -18,6 +20,8 @@ const PARTICLE_LABELS := ["HIP", "NECK", "HEAD", "L KNEE", "L ANKLE", "L TOE",
 var _body: Body
 var _frame := InputFrame.new()
 var _keys := PackedStringArray(["Q", "W", "O", "P"])
+var _walk: Walk
+var _whistle_key := "Space"
 
 
 func _init() -> void:
@@ -26,15 +30,17 @@ func _init() -> void:
 
 
 ## Both entry scenes supply the same model; the view never advances it.
-func present(body: Body, frame: InputFrame) -> void:
+func present(body: Body, frame: InputFrame, walk: Walk = null) -> void:
 	_body = body
 	_frame = frame
+	_walk = walk
 	queue_redraw()
 
 
 ## Keycaps reflect Settings rather than becoming a second set of hardcoded controls.
-func configure_keys(labels: PackedStringArray) -> void:
+func configure_keys(labels: PackedStringArray, whistle_key := "Space") -> void:
 	_keys = labels.duplicate()
+	_whistle_key = whistle_key
 	queue_redraw()
 
 
@@ -42,11 +48,16 @@ func _draw() -> void:
 	if _body == null or size.x < 100.0 or size.y < 100.0:
 		return
 	var font := get_theme_default_font()
-	var scale_factor := minf(size.y * 0.27, size.x / 5.0)
 	var ground_y := size.y * 0.77
 	var hip_x := _body.positions[Body.HIP].x
+	var left_x := hip_x - 1.4
+	var right_x := hip_x + 2.8
+	if _walk != null:
+		left_x = minf(left_x, _walk.dog.position.x - 0.7)
+		right_x = maxf(right_x, _walk.dog.position.x + 0.7)
+	var scale_factor := minf(size.y * 0.27, (size.x - MARGIN * 2.0) / (right_x - left_x))
 	var base_y := _body.ground_height(hip_x)
-	var origin := Vector2(size.x * 0.34, ground_y)
+	var origin := Vector2(MARGIN + (hip_x - left_x) * scale_factor, ground_y)
 	draw_rect(Rect2(Vector2.ZERO, size), SKY)
 	draw_rect(Rect2(Vector2(0.0, ground_y), Vector2(size.x, size.y - ground_y)), GRASS)
 	var ground_points := PackedVector2Array()
@@ -92,23 +103,30 @@ func _draw() -> void:
 				else Vector2(10.0, -10.0)
 			draw_string(font, points[particle] + offset, PARTICLE_LABELS[particle],
 				HORIZONTAL_ALIGNMENT_LEFT, -1.0, 16, INK)
-	draw_string(font, Vector2(MARGIN, 30.0), "PHYSICS SPIKE / SAM",
+	if _walk != null:
+		_draw_dog_and_leash(font, points[Body.HAND], origin, scale_factor, hip_x, base_y)
+	draw_string(font, Vector2(MARGIN, 30.0),
+		"PHYSICS SPIKE / SAM" if _walk == null else "GREY BOX / SAM + CAPITAN",
 		HORIZONTAL_ALIGNMENT_LEFT, -1.0, 20, INK)
 	draw_string(font, Vector2(MARGIN, 57.0),
 		"Lean %+.0f deg  /  %d supporting legs" % [
 			rad_to_deg(_body.torso_angle()), _body.stance_count(),
 		], HORIZONTAL_ALIGNMENT_LEFT, -1.0, 18, INK)
+	if _walk != null:
+		var status := "%s / %.0f N" % [_walk.dog.caption(), _walk.leash.tension]
+		draw_multiline_string(font, Vector2(MARGIN, 83.0), status,
+			HORIZONTAL_ALIGNMENT_LEFT, size.x - MARGIN * 2.0, 16, 2, INK)
 	_draw_balance(font)
 	_draw_keys(font)
 	if _body.is_over():
-		draw_string(font, Vector2(MARGIN, size.y - 84.0),
+		draw_string(font, Vector2(MARGIN, size.y - (114.0 if _walk != null else 84.0)),
 			"OFF THE PATH" if _body.end_cause == "off_path" else "A MAGNIFICENT TUMBLE",
 			HORIZONTAL_ALIGNMENT_LEFT, -1.0, 22, INK)
 
 
 func _draw_balance(font: Font) -> void:
 	var width := minf(300.0, size.x * 0.38)
-	var centre := Vector2(size.x - MARGIN - width * 0.5, 40.0)
+	var centre := Vector2(size.x - MARGIN - width * 0.5, 40.0 if size.x >= 900.0 else 132.0)
 	var limit := _body.half_width + Body.EDGE_ALLOWANCE
 	draw_rect(Rect2(centre - Vector2(width * 0.5, 12.0), Vector2(width, 24.0)), CREAM)
 	draw_line(centre - Vector2(width * 0.5, 0.0), centre + Vector2(width * 0.5, 0.0), INK, 2.0)
@@ -118,12 +136,18 @@ func _draw_balance(font: Font) -> void:
 	draw_line(centre - Vector2(0.0, 9.0), centre + Vector2(0.0, 9.0), INK, 1.0)
 	var bubble_x := centre.x + clampf(_body.z / limit, -1.0, 1.0) * width * 0.5
 	draw_circle(Vector2(bubble_x, centre.y), 7.0, LEFT)
-	draw_string(font, Vector2(centre.x - width * 0.5, 77.0),
+	draw_string(font, Vector2(centre.x - width * 0.5, centre.y + 37.0),
 		"Z %+.2f m / edge +/- %.2f" % [_body.z, limit],
 		HORIZONTAL_ALIGNMENT_LEFT, width, 18, INK)
 
 
 func _draw_keys(font: Font) -> void:
+	if _walk != null:
+		draw_string(font, Vector2(MARGIN, size.y - 80.0),
+			"%s whistle / %s" % [_whistle_key,
+				"READY" if _walk.dog.cooldown_ticks == 0
+				else "%.1f S COOLDOWN" % (_walk.dog.cooldown_ticks * Body.STEP)],
+			HORIZONTAL_ALIGNMENT_LEFT, size.x - MARGIN * 2.0, 18, INK)
 	var width := minf(110.0, (size.x - MARGIN * 2.0 - 30.0) / 4.0)
 	var strengths: Array[float] = [_frame.q, _frame.w, _frame.o, _frame.p]
 	for index in 4:
@@ -135,3 +159,39 @@ func _draw_keys(font: Font) -> void:
 			"%s%s" % [_keys[index], " +" if strengths[index] > 0.0 else ""],
 			HORIZONTAL_ALIGNMENT_LEFT, width - 20.0, 22,
 			CREAM if strengths[index] > 0.0 else INK)
+
+
+func _draw_dog_and_leash(
+	font: Font, hand: Vector2, origin: Vector2, scale_factor: float, hip_x: float, base_y: float
+) -> void:
+	var dog := _walk.dog
+	var ground := origin + Vector2((dog.position.x - hip_x) * scale_factor,
+		-(_body.ground_height(dog.position.x) - base_y) * scale_factor
+		+ dog.position.y * scale_factor * 0.2)
+	var collar := ground - Vector2(0.0, Dog.COLLAR_HEIGHT * scale_factor)
+	var sag := maxf(0.0, _walk.leash.length - _walk.leash.separation) * scale_factor * 0.5
+	var rope := PackedVector2Array()
+	for index in 25:
+		var along := float(index) / 24.0
+		rope.append(hand.lerp(collar, along) + Vector2(0.0, sag * 4.0 * along * (1.0 - along)))
+	draw_polyline(rope, INK, 3.0, true)
+	draw_rect(Rect2(collar + Vector2(-0.5, -0.05) * scale_factor,
+		Vector2(0.54, 0.22) * scale_factor), PAVEMENT)
+	draw_rect(Rect2(collar + Vector2(-0.5, -0.05) * scale_factor,
+		Vector2(0.54, 0.22) * scale_factor), INK, false, 2.0)
+	draw_circle(collar + Vector2(0.09, -0.08) * scale_factor, 0.12 * scale_factor, PAVEMENT)
+	draw_circle(collar + Vector2(0.09, -0.08) * scale_factor, 0.12 * scale_factor, INK, false, 2.0)
+	for leg_x in [-0.41, -0.1]:
+		draw_line(collar + Vector2(leg_x, 0.12) * scale_factor,
+			ground + Vector2(leg_x, 0.0) * scale_factor, INK, 4.0, true)
+	draw_line(collar + Vector2(-0.5, 0.0) * scale_factor,
+		collar + Vector2(-0.63, -0.16) * scale_factor, INK, 4.0, true)
+	draw_circle(collar, 4.0, LEFT)
+	draw_string(font, ground + Vector2(-0.45 * scale_factor, 22.0), "CAPITAN",
+		HORIZONTAL_ALIGNMENT_LEFT, -1.0, 16, INK)
+	if dog.state != Dog.TROT:
+		var bubble := collar - Vector2(0.0, 0.45 * scale_factor)
+		draw_circle(bubble, 16.0, CREAM)
+		draw_circle(bubble, 16.0, INK, false, 2.0)
+		draw_string(font, bubble + Vector2(-5.0, 7.0), "!",
+			HORIZONTAL_ALIGNMENT_LEFT, -1.0, 22, INK)

@@ -6,10 +6,12 @@ The host project is two directories above this folder.
 
 ## Current scope
 
-The first playable build is a **walker-only physics spike**. It deliberately
-has no dog AI, leash, final art, route unlocks, store or multiplayer yet.
-Do not describe the prototype as the finished walk. Milestone 1's three-person
-playtest remains a gate before tuning progression or beginning later milestones.
+The playable build is a **dog + leash grey box** with centre-line trot, one
+seeded squirrel lunge and Whistle. Final art, additional distractions, happiness,
+route unlocks, store and multiplayer are not built.
+Do not describe the prototype as the finished walk. The owner explicitly
+authorized grey-box dog/leash work before Milestone 1's three-person playtest.
+That playtest is still unverified and blocks progression tuning, not this milestone.
 Owner decisions in DESIGN section 16 still block the features they name.
 
 ## Boundaries
@@ -26,6 +28,10 @@ Owner decisions in DESIGN section 16 still block the features they name.
   not a canned translation or a visual animation, move the walker.
 - Views only read the model. The debug view is intentionally 2D; final art
   will be an isolated 3D viewport using `gl_compatibility`.
+- `walk_state.gd` owns the coupled fixed clock. Apply the same measured rope force
+  to the hand and collar with opposite signs. Whistle is edge-triggered in the
+  model; never use a render-frame timer or teleport the dog back to the centre.
+- The spike's `--walker-only` option preserves the original no-dog playtest.
 - Runtime scripts must not depend on `tools\`, which is development-only.
 - Keep knee contacts legal, opposing controls neutral, distance monotonic,
   and a relaxed double stance stable. Assists must not disable progression.
@@ -43,6 +49,9 @@ godot --path ..\.. --scene res://games/capitans_walk/tools/physics_spike.tscn --
 godot --headless --path ..\.. --script res://games/capitans_walk/tests/manifest_test.gd -- --game=all
 godot --headless --path ..\.. --script res://games/capitans_walk/tests/walker_body_test.gd -- --game=all
 godot --headless --path ..\.. --script res://games/capitans_walk/tests/determinism_test.gd -- --game=all
+godot --headless --path ..\.. --script res://games/capitans_walk/tests/leash_test.gd -- --game=all
+godot --headless --path ..\.. --script res://games/capitans_walk/tests/dog_brain_test.gd -- --game=all
+godot --headless --path ..\.. --script res://games/capitans_walk/tests/walk_state_test.gd -- --game=all
 godot --headless --path ..\.. --script res://games/capitans_walk/tests/capitans_scene_test.gd -- --game=all
 ```
 
@@ -54,7 +63,7 @@ There is no separate linter or formatter in the host.
 The body suite deliberately logs two rejected nonfinite-input errors. The host
 Saves suite also logs corrupt-fixture parse errors. Do not confuse these expected
 negative cases with a script parse error or an exit-time resource leak; see
-README's current validation limitation.
+README's validation notes.
 
 SceneTree tests must load gameplay at runtime after autoloads exist, rather
 than preloading or naming `GameShell`. Do not claim a human playtest or rendered

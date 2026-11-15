@@ -1,6 +1,6 @@
 extends Control
 
-## The physics spike draws the actual particles and support axis, not an invented gait.
+## Park silhouettes and the diagnostic spike read the same actual solver positions.
 
 const Body = preload("res://games/capitans_walk/walk/walker_body.gd")
 const InputFrame = preload("res://games/capitans_walk/walk/input_frame.gd")
@@ -28,6 +28,11 @@ var _whistle_key := "Space"
 var _easy_keys := PackedStringArray(["A", "D"])
 var _easy_enabled := false
 var _hud := WalkHUD.new()
+var control_tray := HFlowContainer.new()
+var game_presentation := false
+var reduced_motion := false
+var unit := 1.0
+var _key_labels: Array[Label] = []
 var show_keycaps := true:
 	set(value):
 		show_keycaps = value
@@ -41,6 +46,15 @@ func _init() -> void:
 	custom_minimum_size = Vector2(240.0, 260.0)
 	add_child(_hud)
 	_hud.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(control_tray)
+	control_tray.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	control_tray.hide()
+	control_tray.visibility_changed.connect(queue_redraw)
+	for index in 5:
+		var label := Label.new()
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		control_tray.add_child(label)
+		_key_labels.append(label)
 
 
 ## Both entry scenes supply the same model; the view never advances it.
@@ -48,7 +62,11 @@ func present(body: Body, frame: InputFrame, walk: Walk = null) -> void:
 	_body = body
 	_frame = frame
 	_walk = walk
+	_hud.minimal = game_presentation
+	_hud.unit = unit
 	_hud.present(body, walk)
+	if control_tray.visible:
+		_sync_controls()
 	queue_redraw()
 
 
@@ -61,14 +79,39 @@ func configure_keys(
 	_whistle_key = whistle_key
 	_easy_keys = easy_labels.duplicate()
 	_easy_enabled = easy_enabled
+	_sync_controls()
 	queue_redraw()
+
+
+func _sync_controls() -> void:
+	if _key_labels.is_empty():
+		return
+	var labels := _easy_keys if _easy_enabled else _keys
+	var strengths := PackedFloat32Array([_frame.easy_left, _frame.easy_right]) if _easy_enabled \
+		else PackedFloat32Array([_frame.q, _frame.w, _frame.o, _frame.p])
+	var names := ["Left leg", "Right leg"] if _easy_enabled \
+		else ["Left thigh", "Right thigh", "Left calf", "Right calf"]
+	control_tray.add_theme_constant_override("h_separation", roundi(12 * unit))
+	control_tray.add_theme_constant_override("v_separation", roundi(4 * unit))
+	for index in 5:
+		var label := _key_labels[index]
+		label.add_theme_font_size_override("font_size", roundi(13 * unit))
+		label.visible = index < labels.size() or index == 4
+		if index < labels.size():
+			label.text = "%s  %s" % [labels[index], names[index]]
+			label.add_theme_color_override("font_color", LEFT if strengths[index] > 0 else INK)
+		elif index == 4:
+			label.text = "%s  Whistle" % _whistle_key
+	control_tray.size.x = maxf(1, size.x - 24 * unit)
+	control_tray.position = Vector2(12 * unit,
+		size.y - control_tray.get_combined_minimum_size().y - 12 * unit)
 
 
 func _draw() -> void:
 	if _body == null or size.x < 100.0 or size.y < 100.0:
 		return
 	var font := get_theme_default_font()
-	var ground_y := size.y * 0.77
+	var ground_y := size.y * (0.72 if game_presentation else 0.77)
 	var hip_x := _body.positions[Body.HIP].x
 	var left_x := hip_x - 1.4
 	var right_x := hip_x + 2.8
@@ -87,6 +130,8 @@ func _draw() -> void:
 	var base_y := _body.ground_height(hip_x)
 	var origin := Vector2(MARGIN + (hip_x - left_x) * scale_factor, ground_y)
 	draw_rect(Rect2(Vector2.ZERO, size), SKY)
+	if game_presentation:
+		_draw_park_backdrop(ground_y, scale_factor, hip_x)
 	var ground_points := PackedVector2Array()
 	var visible_start := hip_x - origin.x / scale_factor
 	var visible_end := hip_x + (size.x - origin.x) / scale_factor
@@ -101,13 +146,22 @@ func _draw() -> void:
 	var fill := ground_points.duplicate()
 	fill.append(Vector2(size.x, size.y))
 	fill.append(Vector2(0.0, size.y))
-	draw_colored_polygon(fill, GRASS)
-	draw_polyline(ground_points, INK, 5.0, true)
+	draw_colored_polygon(fill, Color("718367") if game_presentation else GRASS)
+	if game_presentation:
+		var path := ground_points.duplicate()
+		for index in range(ground_points.size() - 1, -1, -1):
+			path.append(ground_points[index] + Vector2(0, 0.14 * scale_factor))
+		draw_colored_polygon(path, Color("cbbfa0"))
+		draw_polyline(ground_points, Color("eadbc0"), maxf(1, 0.018 * scale_factor), true)
+	else:
+		draw_polyline(ground_points, INK, 5.0, true)
 	if _walk != null and _walk.route != null:
 		_draw_route(font, origin, scale_factor, hip_x, base_y)
 		_draw_moving_hazards(font, origin, scale_factor, hip_x, base_y)
 	for metre in range(floori(hip_x - origin.x / scale_factor),
 		ceili(hip_x + (size.x - origin.x) / scale_factor) + 1):
+		if game_presentation:
+			break
 		var x := origin.x + (float(metre) - hip_x) * scale_factor
 		var y := ground_y - (_body.ground_height(float(metre)) - base_y) * scale_factor
 		draw_line(Vector2(x, y), Vector2(x, y + 16.0), INK, 2.0)
@@ -121,13 +175,19 @@ func _draw() -> void:
 				continue
 			draw_arc(point, 18.0, 0.0, TAU, 24, CREAM, 7.0, true)
 			draw_arc(point, 18.0, 0.0, TAU, 24, INK, 2.0, true)
-			draw_string(font, point + Vector2(-24.0, -25.0), "SNIFF",
-				HORIZONTAL_ALIGNMENT_LEFT, -1.0, 14, INK)
+			if not game_presentation:
+				draw_string(font, point + Vector2(-24.0, -25.0), "SNIFF",
+					HORIZONTAL_ALIGNMENT_LEFT, -1.0, 14, INK)
 
 	var points := PackedVector2Array()
 	for point in _body.positions:
 		points.append(origin + Vector2((point.x - hip_x) * scale_factor,
 			-(point.y - base_y) * scale_factor))
+	if game_presentation:
+		_draw_walker(points, scale_factor)
+		if _walk != null:
+			_draw_dog_and_leash(font, points[Body.HAND], origin, scale_factor, hip_x, base_y)
+		return
 	for leg in [1, 0]:
 		var color := LEFT if leg == 0 else RIGHT
 		var knee: int = Body.KNEES[leg]
@@ -186,8 +246,9 @@ func _draw_route(
 						Vector2(x + 6.0, y + 5.0), CREAM, 2.0, true)
 			var text_x := clampf((left + right) * 0.5 - 38.0,
 				MARGIN, size.x - MARGIN - 90.0)
-			draw_string(font, Vector2(text_x, y - 25.0), label,
-				HORIZONTAL_ALIGNMENT_LEFT, 90.0, 14, INK)
+			if not game_presentation:
+				draw_string(font, Vector2(text_x, y - 25.0), label,
+					HORIZONTAL_ALIGNMENT_LEFT, 90.0, 14, INK)
 
 
 func _draw_moving_hazards(
@@ -329,6 +390,14 @@ func _draw_dog_and_leash(
 		var along := float(index) / 24.0
 		rope.append(hand.lerp(collar, along) + Vector2(0.0, sag * 4.0 * along * (1.0 - along)))
 	draw_polyline(rope, INK, 3.0, true)
+	if game_presentation:
+		_draw_capitan(collar, ground, scale_factor)
+		if dog.state != Dog.TROT:
+			var bubble := collar - Vector2(0, 0.45 * scale_factor)
+			draw_circle(bubble, 12 * unit, Color(CREAM, 0.85))
+			draw_string(font, bubble + Vector2(-4, 5) * unit, dog.icon(),
+				HORIZONTAL_ALIGNMENT_LEFT, -1, roundi(15 * unit), INK)
+		return
 	draw_rect(Rect2(collar + Vector2(-0.5, -0.05) * scale_factor,
 		Vector2(0.54, 0.22) * scale_factor), PAVEMENT)
 	draw_rect(Rect2(collar + Vector2(-0.5, -0.05) * scale_factor,
@@ -349,3 +418,104 @@ func _draw_dog_and_leash(
 		draw_circle(bubble, 16.0, INK, false, 2.0)
 		draw_string(font, bubble + Vector2(-5.0, 7.0), dog.icon(),
 			HORIZONTAL_ALIGNMENT_LEFT, -1.0, 22, INK)
+
+
+func _draw_park_backdrop(ground_y: float, scale_factor: float, hip_x: float) -> void:
+	for band in 24:
+		var top := size.y * float(band) / 24
+		draw_rect(Rect2(0, top, size.x, size.y / 24 + 1),
+			Color("9ebfbc").lerp(Color("e5dfc5"), float(band) / 23))
+	var shift := 0.0 if reduced_motion else hip_x * 0.16
+	for layer in 2:
+		var ridge := PackedVector2Array()
+		for step in 41:
+			var x := size.x * step / 40
+			var phase := x / maxf(scale_factor, 1) * 0.7 + shift + layer * 2.3
+			ridge.append(Vector2(x, ground_y - scale_factor * (
+				0.35 + layer * 0.28 + sin(phase) * 0.23 + cos(phase * 0.47) * 0.18)))
+		ridge.append(Vector2(size.x, size.y))
+		ridge.append(Vector2(0, size.y))
+		draw_colored_polygon(ridge, Color("bdc9ad") if layer == 0 else Color("94ad96"))
+	for index in range(-2, ceili(size.x / maxf(1, scale_factor * 1.8)) + 2):
+		var cell := index + floori(shift / 1.8)
+		var x := (float(cell) * 1.8 - shift) * scale_factor
+		var height := (0.75 + 0.15 * sin(float(cell) * 2.7)) * scale_factor
+		var base := Vector2(x, ground_y - 0.22 * scale_factor)
+		draw_line(base, base - Vector2(0, height), Color("7c8e7a"), 0.07 * scale_factor, true)
+		var crown := base - Vector2(0, height)
+		_oval(crown, Vector2(0.35, 0.43) * scale_factor, Color("809b86"))
+		_oval(crown + Vector2(-0.15, 0.05) * scale_factor,
+			Vector2(0.27, 0.32) * scale_factor, Color("9bb18e"))
+
+
+func _draw_walker(points: PackedVector2Array, scale_factor: float) -> void:
+	for leg in [1, 0]:
+		var color := Color("45566a") if leg == 0 else Color("354655")
+		var knee := int(Body.KNEES[leg])
+		var ankle := int(Body.ANKLES[leg])
+		var toe := int(Body.TOES[leg])
+		for segment in [[Body.HIP, knee], [knee, ankle]]:
+			draw_line(points[segment[0]], points[segment[1]], color, 0.105 * scale_factor, true)
+			draw_circle(points[segment[1]], 0.052 * scale_factor, color)
+		draw_line(points[ankle], points[toe], CREAM, 0.09 * scale_factor, true)
+		draw_line(points[ankle] - Vector2(0, 0.018 * scale_factor),
+			points[toe] - Vector2(0, 0.018 * scale_factor),
+			LEFT if leg == 0 else RIGHT, 0.055 * scale_factor, true)
+	var axis := (points[Body.NECK] - points[Body.HIP]).normalized()
+	var side := axis.orthogonal() * 0.13 * scale_factor
+	draw_colored_polygon(PackedVector2Array([
+		points[Body.NECK] + side * 0.8, points[Body.NECK] - side * 0.8,
+		points[Body.HIP] - side, points[Body.HIP] + side,
+	]), Color("537c7d"))
+	draw_line(points[Body.NECK] + side * 0.65, points[Body.HIP] + side * 0.65,
+		Color("89a6a0"), 0.018 * scale_factor, true)
+	draw_line(points[Body.NECK], points[Body.HAND], Color("537c7d"), 0.075 * scale_factor, true)
+	draw_circle(points[Body.HAND], 0.047 * scale_factor, Color("e4b79a"))
+	var head := points[Body.HEAD]
+	var radius := Body.RADII[Body.HEAD] * scale_factor
+	draw_line(points[Body.NECK], head, Color("d2a78d"), 0.07 * scale_factor, true)
+	draw_circle(head, radius, Color("e4b79a"))
+	draw_arc(head, radius * 0.9, PI * 0.85, TAU * 0.94, 20,
+		Color("524e46"), radius * 0.35, true)
+	draw_circle(head + Vector2(radius * 0.62, -radius * 0.08), radius * 0.09, INK)
+
+
+func _draw_capitan(collar: Vector2, ground: Vector2, s: float) -> void:
+	var white := Color("f5f0e2")
+	_oval(ground + Vector2(-0.22, 0.03) * s, Vector2(0.38, 0.045) * s, Color(INK, 0.15))
+	for x in [-0.41, -0.10]:
+		draw_line(collar + Vector2(x, 0.08) * s, ground + Vector2(x, -0.025) * s,
+			Color("d8d6c6"), 0.07 * s, true)
+		_oval(ground + Vector2(x + 0.01, -0.025) * s, Vector2(0.06, 0.035) * s, white)
+	_oval(collar + Vector2(-0.23, 0.04) * s, Vector2(0.30, 0.14) * s, white)
+	for index in 6:
+		var x := -0.48 + index * 0.075
+		draw_colored_polygon(PackedVector2Array([
+			collar + Vector2(x, -0.04) * s, collar + Vector2(x - 0.025, -0.13) * s,
+			collar + Vector2(x + 0.07, -0.05) * s,
+		]), white)
+	draw_arc(collar + Vector2(-0.54, -0.12) * s, 0.10 * s,
+		0.2, PI * 1.65, 16, white, 0.055 * s, true)
+	var head := collar + Vector2(0.075, -0.075) * s
+	_oval(head, Vector2(0.15, 0.14) * s, white)
+	_oval(head + Vector2(-0.04, -0.02) * s, Vector2(0.083, 0.11) * s, INK)
+	_oval(head + Vector2(-0.09, 0.065) * s, Vector2(0.065, 0.13) * s, INK)
+	_oval(head + Vector2(0.05, 0.04) * s, Vector2(0.10, 0.065) * s, Color("dcc2a0"))
+	_oval(head + Vector2(0.115, 0.035) * s, Vector2(0.095, 0.06) * s, white)
+	_oval(head + Vector2(0.19, 0.015) * s, Vector2(0.035, 0.032) * s, INK)
+	draw_circle(head + Vector2(0.03, -0.025) * s, 0.025 * s, INK)
+	draw_circle(head + Vector2(0.037, -0.032) * s, 0.008 * s, Color.WHITE)
+	draw_line(head + Vector2(0.005, -0.073) * s, head + Vector2(0.053, -0.065) * s,
+		Color("c1a17c"), 0.018 * s, true)
+	_oval(head + Vector2(0.12, 0.095) * s, Vector2(0.025, 0.04) * s, Color("d89892"))
+	draw_line(collar + Vector2(-0.025, -0.09) * s, collar + Vector2(0.01, 0.10) * s,
+		Color("b95c51"), 0.036 * s, true)
+	draw_circle(collar, 0.02 * s, Color("dac695"))
+
+
+func _oval(centre: Vector2, radius: Vector2, color: Color) -> void:
+	var points := PackedVector2Array()
+	for index in 24:
+		var angle := TAU * index / 24
+		points.append(centre + Vector2(cos(angle), sin(angle)) * radius)
+	draw_colored_polygon(points, color)

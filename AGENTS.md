@@ -6,11 +6,14 @@ The host project is two directories above this folder.
 
 ## Current scope
 
-The playable build is a **keyboard/gamepad/multitouch dog + leash grey box** with five seeded
+The playable build is a **keyboard/gamepad/multitouch dog + leash prototype** with five seeded
 moods, safe sniff spots, happiness, rhythm points, Whistle and four live assists.
 The main game streams seeded Park terrain with real puddle grip and slopes,
 sprinkler sweeps, passing joggers, environmental pigeon flocks and friendly dogs.
-Touch has Thumbs, Left-handed and Right-handed layouts. Pickups, final art,
+Original 2D Park scenery and toy silhouettes follow the actual solver; the
+separate physics spike retains its diagnostic drawing. Help collapses key
+legends, never the active touch pads or meaningful warning cues.
+Touch has Thumbs, Left-handed and Right-handed layouts. Pickups, final 3D art,
 route unlocks, store and multiplayer are not built.
 Do not describe the prototype as the finished walk. The owner explicitly
 authorized grey-box dog/leash work before Milestone 1's three-person playtest.
@@ -29,8 +32,9 @@ Owner decisions in DESIGN section 16 still block the features they name.
   Renderers invert Y. Lateral Z is a separate balance axis.
 - `walker_body.gd` advances in fixed 1/120-second steps. Motors and contacts,
   not a canned translation or a visual animation, move the walker.
-- Views only read the model. The debug view is intentionally 2D; final art
-  will be an isolated 3D viewport using `gl_compatibility`.
+- Views only read the model. `walker_debug_view.gd` keeps its diagnostic mode
+  by default; gameplay opts into the original 2D Park presentation.
+  Final 3D art remains an unimplemented milestone using `gl_compatibility`.
 - `walk_state.gd` owns the coupled fixed clock. Apply the same measured rope force
   to the hand and collar with opposite signs. Whistle is edge-triggered in the
   model; never use a render-frame timer or teleport the dog back to the centre.

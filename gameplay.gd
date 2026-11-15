@@ -1,6 +1,6 @@
 extends GameShell
 
-## The shared pause/results flow around the deliberately art-free dog/leash walk.
+## A model-driven Park diorama around the original dog/leash solver.
 
 const Options = preload("res://games/capitans_walk/capitans_walk_options.gd")
 const Body = preload("res://games/capitans_walk/walk/walker_body.gd")
@@ -20,6 +20,7 @@ var _view: DebugView
 var _walk_speed := 1.0
 var _walk_seed := 0
 var _assisted := false
+var _capture_inset := 0.0
 
 
 ## The manifest, rather than the framework, names the running game.
@@ -46,7 +47,10 @@ func _load_round_settings() -> void:
 func _build_playfield() -> void:
 	_view = DebugView.new()
 	_view.name = "WalkerDebugView"
+	_view.game_presentation = true
+	_view.reduced_motion = _reduced_motion_enabled
 	_playfield.add_child(_view)
+	register_hud_controls(_view.control_tray, _resize_view, false)
 	_controls = WalkControls.new()
 	_controls.name = "WalkControls"
 	_controls.restart_requested.connect(_start_round)
@@ -55,6 +59,7 @@ func _build_playfield() -> void:
 	_controls.gamepad_changed.connect(_configure_mode_ui)
 	_playfield.add_child(_controls)
 	get_viewport().size_changed.connect(_resize_view)
+	_shell_top_bar.resized.connect(_resize_view, CONNECT_DEFERRED)
 	_resize_view()
 	_view.present(_body, _frame, _walk)
 	_configure_mode_ui()
@@ -142,6 +147,7 @@ func _configure_mode_ui() -> void:
 	var result_caption := _round_player_one_score.get_parent().get_node("Caption") as Label
 	result_caption.text += " / WALK SCORE"
 	_time_caption.text = "SWAY / %.2f M EDGE" % (_body.half_width + Body.EDGE_ALLOWANCE)
+	_time_label.get_parent().get_parent().hide()
 	_time_progress.hide()
 	_player_one_streak.show()
 	_round_instructions.text = "Restart for another walk, or see rhythm and physics stats."
@@ -269,14 +275,29 @@ func _update_balance() -> void:
 		_callout.text = "LEFT FOOT PLANTED" if _body.foot_contacts[0] else "RIGHT FOOT PLANTED"
 
 
+func _set_capture_inset(bottom: float) -> void:
+	_capture_inset = maxf(0, bottom)
+	_resize_view()
+
+
 func _resize_view() -> void:
 	if _view == null:
 		return
 	var bounds := _playfield_bounds()
+	bounds.size.y = maxf(1, minf(bounds.end.y,
+		get_viewport_rect().end.y - _capture_inset) - bounds.position.y)
 	_controls.position = bounds.position
 	_controls.size = bounds.size
 	_view.position = bounds.position
 	_view.size = Vector2(bounds.size.x, bounds.size.y - _controls.touch_height())
-	_view.show_keycaps = not _controls.touch_pads.visible
+	_view.unit = _shell_hud_unit
+	_view.show_keycaps = false
 	_pause_button.visible = DisplayServer.is_touchscreen_available() \
 		and not _controls.touch_pads.visible
+
+
+func _set_reduced_motion_enabled(value: bool) -> void:
+	super(value)
+	if _view != null:
+		_view.reduced_motion = value
+		_view.queue_redraw()

@@ -8,8 +8,8 @@ const WalkerTests = preload("res://games/capitans_walk/tests/walker_body_test.gd
 const Walk = preload("res://games/capitans_walk/walk/walk_state.gd")
 const Dog = preload("res://games/capitans_walk/walk/dog_brain.gd")
 const STEPS: Array[Dictionary] = [
-	{"time": 0.0, "title": "Seeded Park grey-box prototype",
-		"body": "Real joint motors, rope and terrain. Capitan is a placeholder, not final art."},
+	{"time": 0.0, "title": "A model-driven Park prototype",
+		"body": "Real joint motors, rope and terrain under original 2D art. Help reveals your key legends."},
 	{"time": 4.0, "title": "Thighs and calves",
 		"body": "Q / W swing thighs. O / P bend and straighten knees. Equal opposing keys cancel."},
 	{"time": 8.0, "title": "Plant before the lunge",
@@ -70,12 +70,12 @@ func configure_session(session: Node) -> void:
 
 func start(scene: Node) -> void:
 	_release_keys()
-	# Leave the physical diagram's own keycaps above the shared caption card.
-	var view := scene.get("_view") as Control
-	view.size.y -= 180.0
+	(scene.get_node("%HudHelpButton") as Button).pressed.emit()
 
 
 func update(scene: Node, time: float, _delta: float) -> void:
+	if time >= 4.0 and bool(scene.call("hud_controls_expanded")):
+		(scene.get_node("%HudHelpButton") as Button).pressed.emit()
 	var body := scene.get("_body") as Body
 	var walk := scene.get("_walk") as Walk
 	_furthest = maxf(_furthest, body.distance)
@@ -112,7 +112,7 @@ func validate_finished(scene: Node) -> bool:
 	var complete := _furthest > 0.5 and _settled and _restarted and not body.is_over() \
 		and _saw_warning and _saw_lunge and _whistled and _recalled
 	if not complete:
-		push_error(("Grey-box tutorial incomplete: distance=%.2f, settled=%s, restart=%s, "
+		push_error(("Park tutorial incomplete: distance=%.2f, settled=%s, restart=%s, "
 			+ "warning=%s, lunge=%s, whistle=%s, recall=%s, end=%s.")
 			% [_furthest, _settled, _restarted, _saw_warning, _saw_lunge,
 				_whistled, _recalled, body.end_cause])

@@ -1,11 +1,16 @@
 # Capitan's Walk
 
-The playable build is a **seeded Park grey-box prototype** for the game in
+The playable build is a **seeded Park prototype** for the game in
 [DESIGN.md](DESIGN.md). Four independent controls drive real joint motors on a
 narrow, endlessly streamed path with puddles, slopes and telegraphed Park encounters.
 Capitan trots ahead, pulls a spring-damper rope and reacts to five seeded
 distractions. Sniffing, happiness, rhythm points and optional two-key Easy legs
 are playable. There is no canned forward movement.
+
+Original layered 2D scenery, a clothed walker and a scruffy toy dog follow the
+solver's real joints, contacts and rope. Help reveals the key legends; distance,
+balance, happiness and meaningful cues remain visible. The isolated physics spike
+keeps its diagnostic view. This is presentation polish, not the planned final 3D art.
 
 Keyboard, fixed gamepad and independent multitouch controls are playable.
 Other routes, items/events, final 3D art
@@ -46,7 +51,8 @@ Equal opposing strengths cancel.
 Release everything to plant and settle; knee contact alone is legal.
 Capitan's `!`, caption and original warning tone precede his 0.4-second lunge
 by 0.8 seconds. Double stance is safer than striding into the pull. W+P can
-help lean back; the readout shows the actual torso angle and rope tension.
+help lean back; the balance strip follows the actual sway. The diagnostic spike
+retains its numeric torso-angle and rope-tension readouts.
 Whistle brings him toward the centre line; release before calling again.
 **Easy legs** plays the authored bend/plant phases on the same four motors.
 Hold each leg for its 0.2-second stride, then choose the other or release.
@@ -56,7 +62,7 @@ walk. Manual W+P bracing remains available when the Easy keys are released.
 time, and **Long warnings** doubles every telegraph, including its remaining
 time when enabled live. None changes the fixed 120 Hz solver.
 
-## The grey-box walk
+## The prototype walk
 
 | Icon | Mood | Counter |
 | --- | --- | --- |
@@ -255,14 +261,14 @@ See [TODO.md](TODO.md) for the remaining playtest gate and later milestones.
 ## Prototype walkthrough
 
 `assets\video\tutorial.ogv` and its WebP poster are original footage of the real
-scene, labelled as a grey-box prototype. The game-owned
+scene, labelled as a model-driven Park prototype. The game-owned
 `tools\tutorial_driver.gd` plugs into the host's `tools\tutorial_capture.tscn`:
 it remains a keyboard introduction, verifies walking, warning/lunge, whistle recall,
 settling and restart, and never assigns poses or scores. The generated tones
 are placeholders, not recordings of Capitan's bark.
 
-The host PowerShell recorder's game whitelist does not yet include this game.
-For regeneration, use its Movie Maker scene with `--game=capitans_walk`,
-`--resolution 1280x720 --fixed-fps 30 --write-movie <temporary AVI>`, then encode
-Theora at 960x540, 30 FPS, quality 7 and a 640x360 WebP poster at 9 seconds.
+Regenerate from the host with `tools\record_tutorials.ps1 -Games capitans_walk`
+or `tools/record_tutorials.sh --games capitans_walk`. Both use the real driver
+and recorder-only caption clearance, encode Theora at 960x540, 30 FPS, quality 7,
+and extract a 640x360 WebP poster at 9 seconds.
 Audio is intentionally omitted; the captions carry the lesson.

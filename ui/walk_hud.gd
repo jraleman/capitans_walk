@@ -14,6 +14,8 @@ var _body: Body
 var _walk: Walk
 var _layout_size := Vector2.ZERO
 var compact := false
+var minimal := false
+var unit := 1.0
 
 
 func _init() -> void:
@@ -24,11 +26,20 @@ func _init() -> void:
 func present(body: Body, walk: Walk = null) -> void:
 	_body = body
 	_walk = walk
+	if walk != null:
+		accessibility_description = (
+			"Balance %+.2f metres, edge %.2f. Happiness %.0f of 100. "
+			+ "Combo %d, multiplier %.1f. %s"
+		) % [body.z, body.half_width + Body.EDGE_ALLOWANCE,
+			walk.dog.happiness, walk.rhythm.combo, walk.rhythm.multiplier(), walk.cue_caption()]
+		tooltip_text = accessibility_description
 	queue_redraw()
 
 
 ## The diagnostic camera leaves room for readable phone-sized information, not just labels.
 func header_height() -> float:
+	if minimal:
+		return 44.0 * unit
 	if _walk != null and _compact_layout():
 		return 125.0 * _layout_scale()
 	return (205.0 if _walk != null else 110.0) * _layout_scale()
@@ -38,6 +49,9 @@ func _draw() -> void:
 	if _body == null or size.x < 100.0 or size.y < 100.0:
 		return
 	var font := get_theme_default_font()
+	if minimal:
+		_draw_minimal(font)
+		return
 	var scale_factor := _layout_scale()
 	_layout_size = size / scale_factor
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE * scale_factor)
@@ -75,6 +89,43 @@ func _draw() -> void:
 			combo, HORIZONTAL_ALIGNMENT_LEFT,
 			middle - MARGIN * 2.0 if condensed else _layout_size.x - MARGIN * 2.0, 16, 2, INK)
 	_draw_balance(font)
+
+
+func _draw_minimal(font: Font) -> void:
+	if _walk == null:
+		return
+	var u := unit
+	var baseline := 22 * u
+	var start := Vector2(14, 14) * u
+	var width := minf(64 * u, size.x * 0.2)
+	draw_rect(Rect2(start, Vector2(width, 10 * u)), Color(INK, 0.18))
+	draw_rect(Rect2(start, Vector2(width * _walk.dog.happiness / 100, 10 * u)), GRASS)
+	for x in [start.x, start.x + width]:
+		draw_circle(Vector2(x, start.y + 2 * u), 3 * u, CREAM)
+		draw_circle(Vector2(x, start.y + 8 * u), 3 * u, CREAM)
+	draw_string(font, Vector2(start.x + width + 8 * u, baseline),
+		str(roundi(_walk.dog.happiness)), HORIZONTAL_ALIGNMENT_LEFT, -1, roundi(13 * u), INK)
+	if _walk.rhythm.combo > 0:
+		draw_string(font, Vector2(size.x * 0.45, baseline),
+			"x%.1f" % _walk.rhythm.multiplier(), HORIZONTAL_ALIGNMENT_LEFT, -1,
+			roundi(13 * u), INK)
+	var span := minf(96 * u, size.x * 0.3)
+	var centre := Vector2(size.x - 12 * u - span * 0.5, 19 * u)
+	draw_line(centre - Vector2(span * 0.5, 0), centre + Vector2(span * 0.5, 0), INK, u, true)
+	for sign_value in [-1, 0, 1]:
+		var point := centre + Vector2(sign_value * span * 0.5, 0)
+		draw_line(point - Vector2(0, 5 * u), point + Vector2(0, 5 * u), INK, u, true)
+	var limit := _body.half_width + Body.EDGE_ALLOWANCE
+	draw_circle(centre + Vector2(clampf(_body.z / limit, -1, 1) * span * 0.5, 0), 4 * u, LEFT)
+	var cue := _walk.cue_caption()
+	if not cue.is_empty():
+		var paragraph := TextParagraph.new()
+		paragraph.add_string(cue, font, roundi(12 * u))
+		paragraph.width = size.x - 24 * u
+		var at := Vector2(12, 38) * u
+		draw_rect(Rect2(at - Vector2(4, 2) * u,
+			paragraph.get_size() + Vector2(8, 4) * u), Color(CREAM, 0.78))
+		paragraph.draw(get_canvas_item(), at, INK)
 
 
 func _draw_happiness(font: Font, offset := Vector2.ZERO) -> void:

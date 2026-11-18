@@ -21,6 +21,12 @@ const RESTART := &"capitans_walk_restart"
 const PHOTO := &"capitans_walk_photo"
 const EASY_LEFT := &"capitans_walk_easy_left"
 const EASY_RIGHT := &"capitans_walk_easy_right"
+const STEER_LEFT := &"capitans_walk_steer_left"
+const STEER_RIGHT := &"capitans_walk_steer_right"
+const STEER_ACTIONS: Array[StringName] = [STEER_LEFT, STEER_RIGHT]
+const STEER_BINDINGS: Array[String] = [
+	"controls/capitans_walk_steer_left", "controls/capitans_walk_steer_right",
+]
 const LEG_ACTIONS: Array[StringName] = [Q, W, O, P]
 const LEG_BINDINGS: Array[String] = [
 	"controls/capitans_walk_q", "controls/capitans_walk_w",
@@ -33,17 +39,6 @@ const EASY_BINDINGS: Array[String] = [
 ]
 
 const TUNABLES: Array[Dictionary] = [
-	{
-		"key": EASY_LEGS_KEY, "type": GameManifest.OPTION_TOGGLE, "default": false,
-		"title": "Easy legs", "heading": "Walking assists - live",
-		"description": "Two keys play one motor stride per leg choice. Release to stop.",
-	},
-	{
-		"key": STEADY_KEY, "default": 0.0, "min": 0.0, "max": 1.0,
-		"step": 0.05, "format": GameManifest.FORMAT_PERCENT,
-		"title": "Steady", "heading": "Walking assists - live",
-		"description": "Adds an upright torso spring. Does not automate your steps.",
-	},
 	{
 		"key": WALK_SPEED_KEY, "type": GameManifest.OPTION_CHOICE,
 		"default": 100, "title": "Walk speed", "heading": "Walking assists - live",
@@ -62,7 +57,7 @@ const TUNABLES: Array[Dictionary] = [
 	{
 		"key": TOUCH_LAYOUT_KEY, "type": GameManifest.OPTION_CHOICE, "default": 0,
 		"title": "Touch layout", "heading": "Touch controls",
-		"description": "Split the motor pads between thumbs, or group them under one hand.",
+		"description": "Split leash steering between thumbs, or group it under one hand.",
 		"choices": [
 			{"value": 0, "title": "Thumbs"},
 			{"value": 1, "title": "Left-handed"},
@@ -71,7 +66,7 @@ const TUNABLES: Array[Dictionary] = [
 	},
 ]
 
-const CONTROL_BINDINGS: Array[Dictionary] = [
+const PHYSICS_CONTROL_BINDINGS: Array[Dictionary] = [
 	{
 		"key": "controls/capitans_walk_q", "action": Q, "default": KEY_Q,
 		"title": "Thighs A", "player": 0, "movement": true, "heading": "Leg motors",
@@ -111,6 +106,29 @@ const CONTROL_BINDINGS: Array[Dictionary] = [
 		"key": EASY_BINDINGS[1], "action": EASY_RIGHT, "default": KEY_D,
 		"title": "Easy right leg", "player": 0, "heading": "Easy legs",
 		"description": "With Easy legs on, bend then plant the right leg. Release before repeating.",
+	},
+]
+
+const CONTROL_BINDINGS: Array[Dictionary] = [
+	{
+		"key": STEER_BINDINGS[0], "action": STEER_LEFT, "default": KEY_A,
+		"title": "Steer leash left", "player": 0, "movement": true, "heading": "The leash",
+		"description": "Move your leash hand left to guide Capitan back onto the path.",
+	},
+	{
+		"key": STEER_BINDINGS[1], "action": STEER_RIGHT, "default": KEY_D,
+		"title": "Steer leash right", "player": 0, "movement": true, "heading": "The leash",
+		"description": "Move your leash hand right. Equal opposing controls cancel.",
+	},
+	{
+		"key": WHISTLE_BINDING, "action": WHISTLE, "default": KEY_SPACE,
+		"title": "Whistle", "player": 0, "heading": "The walk",
+		"description": "Recall Capitan after 0.3 s. Six-second cooldown; release to call again.",
+	},
+	{
+		"key": RESTART_BINDING, "action": RESTART, "default": KEY_R,
+		"title": "Restart", "player": 0, "heading": "The walk",
+		"description": "Restart the same 200 m Park route with 100 points.",
 	},
 ]
 

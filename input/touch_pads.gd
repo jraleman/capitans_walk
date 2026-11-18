@@ -14,12 +14,14 @@ const UTILITY_HEIGHT := 64.0
 const ACTIONS: Array[StringName] = [
 	Options.Q, Options.W, Options.O, Options.P,
 	Options.EASY_LEFT, Options.EASY_RIGHT, Options.WHISTLE, Options.RESTART, PAUSE,
+	Options.STEER_LEFT, Options.STEER_RIGHT,
 ]
 const TITLES := {
 	Options.Q: "THIGHS A", Options.W: "THIGHS B",
 	Options.O: "CALVES A", Options.P: "CALVES B",
 	Options.EASY_LEFT: "LEFT LEG", Options.EASY_RIGHT: "RIGHT LEG",
 	Options.WHISTLE: "WHISTLE", Options.RESTART: "RESTART", PAUSE: "PAUSE",
+	Options.STEER_LEFT: "STEER LEFT", Options.STEER_RIGHT: "STEER RIGHT",
 }
 
 var buttons: Dictionary[StringName, Button] = {}
@@ -33,6 +35,12 @@ var _key_labels := PackedStringArray(["Q", "W", "O", "P"])
 var _easy_labels := PackedStringArray(["A", "D"])
 var _whistle_key := "Space"
 var _whistle_seconds := 0.0
+var _steer_labels := PackedStringArray(["A", "D"])
+var path_mode := false:
+	set(value):
+		path_mode = value
+		clear_input()
+		_layout_buttons()
 
 
 func _ready() -> void:
@@ -73,13 +81,20 @@ func configure_keys(
 func preferred_height() -> float:
 	var scale_factor := _readability()
 	_apply_font_sizes(scale_factor)
-	return ceilf(_utility_height(scale_factor) + (PAD_HEIGHT * 2.0 + GAP * 2.0) * scale_factor)
+	var rows := 1.0 if path_mode else 2.0
+	return ceilf(_utility_height(scale_factor) + (PAD_HEIGHT * rows + GAP * 2.0) * scale_factor)
+
+
+func configure_path_keys(labels: PackedStringArray, whistle_key: String, layout: int) -> void:
+	_steer_labels = labels.duplicate()
+	configure_keys(_key_labels, whistle_key, _easy_labels, false, layout)
 
 
 func sample() -> InputFrame:
 	return InputFrame.new(strength(Options.Q), strength(Options.W),
 		strength(Options.O), strength(Options.P), strength(Options.WHISTLE) > 0.0,
-		strength(Options.EASY_LEFT), strength(Options.EASY_RIGHT))
+		strength(Options.EASY_LEFT), strength(Options.EASY_RIGHT),
+		strength(Options.STEER_LEFT), strength(Options.STEER_RIGHT))
 
 
 func strength(action: StringName) -> float:
@@ -201,6 +216,8 @@ func _refresh_labels() -> void:
 		_set_label(Options.LEG_ACTIONS[index], _key_labels[index])
 	_set_label(Options.EASY_LEFT, _easy_labels[0])
 	_set_label(Options.EASY_RIGHT, _easy_labels[1])
+	_set_label(Options.STEER_LEFT, _steer_labels[0])
+	_set_label(Options.STEER_RIGHT, _steer_labels[1])
 	_set_label(Options.WHISTLE, _whistle_key)
 	set_whistle_cooldown(_whistle_seconds)
 	_set_label(Options.RESTART, "")
@@ -272,6 +289,9 @@ func _layout_buttons() -> void:
 		Vector2(left, top), Vector2(left, bottom),
 		Vector2(right, top), Vector2(right, bottom),
 	]
+	if path_mode:
+		motor_actions = [Options.STEER_LEFT, Options.STEER_RIGHT]
+		positions = [Vector2(left, top), Vector2(right, top)]
 	for index in motor_actions.size():
 		var button := buttons[motor_actions[index]]
 		button.position = positions[index]

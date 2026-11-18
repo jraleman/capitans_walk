@@ -1,11 +1,50 @@
 # Capitan's Walk — TODO
 
-Progress tracker for implementing [`DESIGN.md`](DESIGN.md). Sections follow the
-milestones in DESIGN §15, with a scaffolding phase first. Tick a box only when
+Progress tracker for implementing [`DESIGN.md`](DESIGN.md). The first-person
+revision below is current; the older milestones record the superseded QWOP
+plan and its completed diagnostic work. Tick a box only when
 the item works **and** its tests pass. Each phase ends with an exit check.
 
 `§n` points at the matching section of `DESIGN.md`. Run commands from
 `godot-base/`. Framework rules from the root `AGENTS.md` still apply.
+
+---
+
+## Current revision — First-person path guidance (DESIGN §0)
+
+The owner chose automatic walking, left/right leash steering, Whistle,
+point-depletion loss and a finite low-poly 3D Park. The first route is
+provisionally 200 m; this is not progression tuning from a human playtest.
+
+- [x] Deterministic pacing/hand motors and equal/opposite dog/leash forces.
+- [x] Start at 100; +1 per safe metre; one-second continuous grace followed by
+      -10 points/s; return resets grace; zero loses; 200 m with points wins.
+- [x] Remove human-fall endings and hidden legacy happiness drain from main play.
+- [x] Original Compatibility park, first-person camera, Capitan, actual leash,
+      visible boundaries, finish gate and telegraphed distractions.
+- [x] Rebound keyboard, analogue stick/D-pad, independent touch, three handed
+      layouts, pause/focus/device cleanup and in-place same-seed Restart.
+- [x] Live Walk speed/Long warnings; always-visible points, warning and penalty
+      captions; meaningful shared results/stats/scorecard labels.
+- [x] Preserve the legacy default model, diagnostic spike and staged artwork.
+- [x] Real-input 24-second first-person tutorial and separate new poster filenames.
+- [x] All eleven game suites, real 200 m walks with all three input sources,
+      actual point-depletion loss and rendered phone/landscape/ultrawide coverage.
+- [ ] Fully green host sweep: 14/15 pass after the final media import.
+      The instructions-video suite fails because unrelated `baloos_chase`
+      has no tutorial. Capitan's new video and poster load successfully.
+- [ ] Human first-person playtest, physical gamepad/mobile usability and web export.
+- [ ] Owner verification of final dog proportions/likeness and remaining §16 decisions.
+
+Automated steering completes seed 0 at **200 m / 300 points / 14273 fixed
+ticks**, identically through keyboard, gamepad and touch; model walks also
+complete seeds 1 and 731. A passive walk genuinely depletes points. Rendered
+tests cover 360×800 through 2560×1080, visible off-path dog/points/warnings and
+fewer than 60 viewport draw calls. These are not human difficulty findings.
+
+The historical sections below must not reintroduce QWOP controls, endless
+distance, falling, sniff/happiness scoring or a side camera into the main game.
+Future roadmap features need re-evaluation against this revision.
 
 ---
 

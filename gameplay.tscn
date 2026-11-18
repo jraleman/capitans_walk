@@ -7,22 +7,22 @@
 script = ExtResource("2_game")
 
 [node name="Caption" parent="HUD/RoundOver/Center/ScorePanel/Layout/Overview/Duration/Layout" index="0"]
-text = "WALK TIME"
+text = "MODEL TIME"
 
 [node name="Caption" parent="HUD/RoundOver/Center/ScorePanel/Layout/Overview/Hits/Layout" index="0"]
-text = "FOOT PLANTS"
+text = "ON-PATH METRES"
 
 [node name="Caption" parent="HUD/RoundOver/Center/ScorePanel/Layout/Overview/Accuracy/Layout" index="0"]
-visible = false
+text = "POINTS LOST"
 
 [node name="GameAccuracyStat" parent="HUD/RoundOver/Center/ScorePanel/Layout/Overview/Accuracy/Layout" index="1"]
-visible = false
+visible = true
 
 [node name="HitsCaption" parent="HUD/RoundOver/Center/ScorePanel/Layout/Report/Players/PlayerOne/Layout/Stats" index="0"]
-text = "Foot plants"
+text = "On-path metres"
 
 [node name="MissesCaption" parent="HUD/RoundOver/Center/ScorePanel/Layout/Report/Players/PlayerOne/Layout/Stats" index="2"]
-text = "Falls / off path"
+text = "Off-path excursions"
 
 [node name="AccuracyCaption" parent="HUD/RoundOver/Center/ScorePanel/Layout/Report/Players/PlayerOne/Layout/Stats" index="4"]
 visible = false

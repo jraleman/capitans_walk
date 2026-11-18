@@ -26,6 +26,7 @@ var _heard_warnings := 0
 var _heard_whistles := 0
 var _heard_splashes := 0
 var _heard_hazards := 0
+var _was_draining := false
 
 
 ## A restart resets event tracking, not Settings volume or the host's audio ownership.
@@ -34,10 +35,25 @@ func reset() -> void:
 	_heard_whistles = 0
 	_heard_splashes = 0
 	_heard_hazards = 0
+	_was_draining = false
 
 
 ## Both entry scenes use the same cues; headless models never need an audio singleton.
 func update(walk: Walk, manager: Node) -> void:
+	if walk.path != null:
+		if walk.path.warnings > _heard_warnings:
+			var sound: AudioStreamWAV = [
+				_warnings[Profiles.SQUIRREL], _warnings[Profiles.PIGEON], _hazards[Chunks.OTHER_DOG],
+			][walk.path.interest_kind]
+			manager.call("play_sfx", sound, -8.0)
+			manager.call("request_caption", walk.cue_caption())
+			_heard_warnings = walk.path.warnings
+		if walk.path.is_draining() and not _was_draining:
+			manager.call("play_sfx", _warnings[Profiles.PROTEST], -10.0)
+			manager.call("request_caption", walk.path.status_caption())
+		_was_draining = walk.path.is_draining()
+		_update_whistle(walk, manager)
+		return
 	if walk.hazards.splashes > _heard_splashes:
 		manager.call("play_sfx", _splash, -12.0)
 		if walk.dog.state == walk.dog.TROT and walk.dog.response_ticks == 0 \
@@ -53,6 +69,10 @@ func update(walk: Walk, manager: Node) -> void:
 		manager.call("play_sfx", _warnings[walk.dog.mood], -8.0)
 		manager.call("request_caption", walk.dog.telegraph_caption())
 		_heard_warnings = walk.dog.telegraphs
+	_update_whistle(walk, manager)
+
+
+func _update_whistle(walk: Walk, manager: Node) -> void:
 	if walk.dog.whistles > _heard_whistles:
 		manager.call("play_sfx", _whistle, -8.0)
 		manager.call("request_caption", "Whistle heard. Capitan recalls after 0.3 seconds.")

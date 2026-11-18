@@ -12,6 +12,7 @@ const EasyLegs = preload("res://games/capitans_walk/walk/easy_legs.gd")
 const Rhythm = preload("res://games/capitans_walk/walk/stride_rhythm.gd")
 const Route = preload("res://games/capitans_walk/walk/route_generator.gd")
 const Hazards = preload("res://games/capitans_walk/walk/hazards.gd")
+const PathWalk = preload("res://games/capitans_walk/walk/path_walk.gd")
 const REST_SPEED := 0.08
 const WALKING_SPEED := 0.08
 const SNIFF_REST_TICKS := 30
@@ -27,6 +28,7 @@ var leash := Leash.new()
 var rhythm := Rhythm.new()
 var route: Route
 var hazards := Hazards.new()
+var path: PathWalk
 var easy_legs := false
 var last_frame := InputFrame.new()
 var peak_tension := 0.0
@@ -40,10 +42,17 @@ var _terrain_revision := -1
 
 func _init(
 	walker: Profiles = null, walk_seed := 0, dog_profile: DogProfiles = null,
-	park_route: Route = null
+	park_route: Route = null, first_person := false
 ) -> void:
 	body = Body.new(walker, walk_seed)
 	dog = Dog.new(dog_profile)
+	if first_person:
+		path = PathWalk.new()
+		if dog_profile == null:
+			dog.profile.track_spring = 8.0
+			dog.profile.track_damping = 5.0
+			dog.profile.max_drive = 120.0
+			dog.profile.trot_pull = 20.0
 	route = park_route
 	leash.length = dog.profile.leash_length
 	reset(walk_seed)
@@ -66,6 +75,8 @@ func reset(walk_seed := 0) -> void:
 			return
 		_terrain_revision = route.revision
 	body.reset(walk_seed)
+	if path != null:
+		path.reset(walk_seed)
 	leash.reset()
 	dog.reset(walk_seed, hand_position(), leash.length)
 	leash.update(hand_position(), dog.position, Vector2.ZERO, Vector2.ZERO)
@@ -85,17 +96,20 @@ func advance(delta: float, frame: InputFrame, external_force := Vector3.ZERO) ->
 	if not is_finite(delta) or delta < 0.0:
 		push_error("Capitan's Walk requires a finite, nonnegative frame duration.")
 		return
-	if not _valid_frame(frame, external_force) or body.is_over():
+	if not _valid_frame(frame, external_force) or is_over():
 		return
 	_accumulator += delta
-	while _accumulator + Body.EPSILON >= Body.STEP and not body.is_over():
+	while _accumulator + Body.EPSILON >= Body.STEP and not is_over():
 		_accumulator = maxf(0.0, _accumulator - Body.STEP)
 		step(frame, external_force)
 
 
 ## Both endpoints receive the same measured force on the same tick, with opposite signs.
 func step(frame: InputFrame, external_force := Vector3.ZERO) -> void:
-	if not _valid_frame(frame, external_force) or body.is_over():
+	if not _valid_frame(frame, external_force) or is_over():
+		return
+	if path != null:
+		_step_path(frame, external_force)
 		return
 	if route != null:
 		if not route.prepare(minf(body.positions[Body.HIP].x, dog.position.x) - 2.0,
@@ -146,7 +160,13 @@ func step(frame: InputFrame, external_force := Vector3.ZERO) -> void:
 
 ## The rope acts at the real hand's X and the body's lateral balance coordinate.
 func hand_position() -> Vector2:
+	if path != null:
+		return path.hand_position()
 	return Vector2(body.positions[Body.HAND].x, body.z)
+
+
+func is_over() -> bool:
+	return path.is_over() if path != null else body.is_over()
 
 
 func sniff_spots() -> PackedVector2Array:
@@ -155,6 +175,14 @@ func sniff_spots() -> PackedVector2Array:
 
 ## Recall and dog warnings outrank moving encounters, which outrank passive surface data.
 func cue_caption() -> String:
+	if path != null:
+		if dog.response_ticks > 0:
+			return dog.caption()
+		var interest := path.interest_caption()
+		if not interest.is_empty():
+			return interest
+		return "KEEP CAPITAN BETWEEN THE CREAM EDGES / %.0f M TO FINISH" % (
+			PathWalk.FINISH_DISTANCE - path.distance)
 	if dog.is_warning() or dog.response_ticks > 0:
 		return dog.caption()
 	var encounter := hazards.moving_caption(dog)
@@ -167,6 +195,8 @@ func cue_caption() -> String:
 
 ## Distance remains the headline; points include only mechanics already present.
 func final_score() -> int:
+	if path != null:
+		return ceili(maxf(0.0, path.points - Body.EPSILON))
 	return roundi(rhythm.points * dog.score_multiplier())
 
 
@@ -178,7 +208,38 @@ func snapshot() -> Dictionary:
 		"rest_ticks": _rest_ticks,
 		"motor_strengths": [last_frame.q, last_frame.w, last_frame.o, last_frame.p],
 		"accumulator": _accumulator, "route": route.snapshot() if route != null else {},
-		"terrain_revision": _terrain_revision, "hazards": hazards.snapshot()}
+		"terrain_revision": _terrain_revision, "hazards": hazards.snapshot(),
+		"path": path.snapshot() if path != null else {}}
+
+
+func _step_path(frame: InputFrame, external_force: Vector3) -> void:
+	if route != null:
+		if not route.prepare(minf(path.position.x, dog.position.x) - 2.0,
+			maxf(path.position.x, dog.position.x) + 2.0):
+			return
+		if route.revision != _terrain_revision:
+			if not body.set_ground(route.ground(), route.surfaces()):
+				return
+			_terrain_revision = route.revision
+	var hand := path.hand_position()
+	var hand_velocity := path.hand_velocity()
+	if not leash.update(hand, dog.position, hand_velocity, dog.velocity):
+		return
+	last_frame = frame
+	peak_tension = maxf(peak_tension, leash.tension)
+	path.update_interest(dog.recalls)
+	var focus := Vector2(hand.x + leash.length, path.interest_side * 2.3)
+	var grade := body.ground_slope(dog.position.x)
+	var slope_force := Vector2(-dog.profile.mass * Body.GRAVITY * grade
+		/ (1.0 + grade * grade), 0.0)
+	dog.step(frame.whistle, hand, hand_velocity, -leash.force, leash.length,
+		path.distance, true, false, slope_force, focus,
+		path.phase == PathWalk.Phase.INTEREST, false, Vector2(path.velocity.x, 0.0), false)
+	var friction := 0.3 if route != null and route.is_puddle_at(path.position.x) \
+		else Body.GROUND_FRICTION
+	path.integrate(frame.steering(), leash.force + Vector2(external_force.x, external_force.z),
+		body.ground_slope(path.position.x), friction)
+	path.observe(dog.position)
 
 
 func _update_near_fall() -> void:
@@ -196,6 +257,9 @@ func _update_near_fall() -> void:
 func _valid_frame(frame: InputFrame, external_force: Vector3) -> bool:
 	if frame == null or not frame.is_valid() or not external_force.is_finite():
 		push_error("Capitan's Walk requires a valid input frame and finite hand force.")
+		return false
+	if path != null and not path.is_valid():
+		push_error("Capitan's Walk first-person state must be finite with nonnegative points.")
 		return false
 	if not dog.position.is_finite() or not dog.velocity.is_finite():
 		push_error("Capitan's Walk dog position and velocity must be finite.")

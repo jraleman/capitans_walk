@@ -21,12 +21,21 @@ var _commands_down: Dictionary[Vector2i, bool] = {}
 var _enabled := false
 var _focused := true
 var _sampling_allowed := false
+var path_mode := false:
+	set(value):
+		path_mode = value
+		_keys.path_mode = value
+		_pad.path_mode = value
+		touch_pads.path_mode = value
+		clear_input()
 
 
 func _ready() -> void:
 	# Start must still reach the existing pause overlay while the model is paused.
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if not path_mode:
+		KeySource.install_physics_actions()
 	add_child(touch_pads)
 	touch_pads.visible = DisplayServer.is_touchscreen_available()
 	touch_pads.restart_requested.connect(restart_requested.emit)
@@ -50,6 +59,8 @@ func sample() -> InputFrame:
 		frame.whistle = frame.whistle or source.whistle
 		frame.easy_left = maxf(frame.easy_left, source.easy_left)
 		frame.easy_right = maxf(frame.easy_right, source.easy_right)
+		frame.steer_left = maxf(frame.steer_left, source.steer_left)
+		frame.steer_right = maxf(frame.steer_right, source.steer_right)
 	return frame
 
 
@@ -58,6 +69,11 @@ func configure_keys(
 	easy_labels: PackedStringArray, easy_enabled: bool, layout: int
 ) -> void:
 	touch_pads.configure_keys(labels, whistle_key, easy_labels, easy_enabled, layout)
+	_layout_touch()
+
+
+func configure_path_keys(labels: PackedStringArray, whistle_key: String, layout: int) -> void:
+	touch_pads.configure_path_keys(labels, whistle_key, layout)
 	_layout_touch()
 
 
@@ -70,10 +86,11 @@ func set_enabled(value: bool) -> void:
 func clear_input() -> void:
 	_pad.clear_input()
 	touch_pads.clear_input()
-	for action in Options.LEG_ACTIONS + [
+	for action in Options.LEG_ACTIONS + Options.STEER_ACTIONS + [
 		Options.WHISTLE, Options.EASY_LEFT, Options.EASY_RIGHT,
 	]:
-		Input.action_release(action)
+		if InputMap.has_action(action):
+			Input.action_release(action)
 
 
 func touch_height() -> float:
@@ -92,6 +109,8 @@ func _input(event: InputEvent) -> void:
 	if not _focused:
 		return
 	if event is InputEventJoypadButton and event.button_index in COMMANDS:
+		if _pad.device >= 0 and event.device != _pad.device:
+			return
 		var command := Vector2i(event.device, event.button_index)
 		if not event.pressed:
 			_commands_down.erase(command)

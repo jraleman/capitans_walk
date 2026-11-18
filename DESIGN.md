@@ -15,12 +15,90 @@
 | Folder | `godot-base/games/capitans_walk/` (its own Git repository, intended to become a submodule) |
 | Control style | `GameManifest.CONTROL_STYLE_CUSTOM_KEYS` |
 | Round rules | Game-owned (`uses_shell_round_rules = false`) |
-| Players | Solo; two- or three-human hot seat, "Pass the leash" (`max_local_players = 3`, turns) |
+| Players | Solo in the current build; hot seat remains an undecided proposal (§16) |
 | Menu order | `11` (after Sailor Man's planned `10`) |
 | Feature tag | `capitans_walk` |
 | Physics reference | `games/cube_trials/` (node-free fixed-step model under a real 3D view) |
 | Look-and-feel reference | `games/cube_trials/`, `games/chicken_pit/` (toy-like 3D in a `SubViewport` under the 2D shell) |
 | Renderer | `gl_compatibility` — unchanged |
+
+---
+
+## 0. Current owner-approved revision: first-person path guidance
+
+This revision supersedes the original side-view QWOP main-game loop below.
+The owner selected **automatic forward walking**, **left/right leash steering
+and Whistle**, a **finite route**, and an **original low-poly 3D Park**.
+Sections 1-15 retain the earlier design for the diagnostic physics spike and
+future proposals; they do not authorize restoring falls, endless play or
+four-key legs to the main game. The open decisions in section 16 remain open.
+
+### The playable loop
+
+The player sees the walk from human eye height, with Capitan ahead, a visible
+red leash, cream path boundaries and a finish gate. Pacing is automatic.
+Left/right input moves a damped leash-hand motor; the actual rope guides
+Capitan rather than teleporting him or moving him directly with the keys.
+The 200 m length and 1.8 m path width are first-pass implementation defaults,
+not owner-selected progression tuning or a passed human playtest.
+
+| Rule | Current behavior |
+| --- | --- |
+| Starting points | 100 |
+| Safe walking | +1 point per forward metre while Capitan is inside the path |
+| Path test | Dog model centre/collar at `abs(z) <= 0.9 m`; the edge is inclusive |
+| Grace | The first continuous second outside is free; returning resets it immediately |
+| Penalty | After grace, -10 points per model second until Capitan returns |
+| Loss | Points reach zero; human balance/falls no longer end the walk |
+| Win | Reach the 200 m finish with points remaining |
+| Simultaneous finish/depletion | Depletion takes precedence |
+| Restart | Same Park and dog seed, zero distance, 100 points |
+
+Points accrue fractionally on fixed ticks. The displayed whole score rounds
+up so a positive remainder never reads as zero. Distance is monotonic, capped
+at the finish and cannot be farmed by backtracking. The legacy happiness
+drain, sniff requirements and stride multipliers are inactive in this mode.
+
+Seeded squirrels, pigeons and friendly dogs visibly tempt Capitan onto the
+grass. A one-second warning names the side and counter before each pull;
+Long warnings doubles it. Whistle retains its 0.3-second response and
+six-second cooldown, on the same fixed clock. Holding it never auto-repeats.
+Only a completed recall cancels interest. Existing Park slopes and wet grip
+affect the guide's physical pacing; the old sprinkler/jogger/sniff encounter
+system remains in the legacy model, not an advertised first-person feature.
+
+### Controls and presentation
+
+- Keyboard: A/D steer, Space whistles, R restarts and Escape pauses.
+  Gameplay bindings remain editable through shared Settings.
+- Fixed gamepad: left stick or D-pad left/right steer, A whistles,
+  Y/Back restarts, Start pauses. Stick strength and controller ownership survive.
+- Independent touch pads: left/right, Whistle, Restart and Pause, with
+  Thumbs, Left-handed and Right-handed layouts outside the 3D view.
+- Live assists: Walk speed at 100/85/70% and Long warnings. Slower pace slows
+  the entire model clock, including penalties and cooldowns. Easy legs and
+  Steady are retained only for the old physics tools.
+- Help folds legends, not points, warning captions or touch controls.
+  Reduced motion parks decorative dog motion; there is no camera bob.
+- Shared results and scorecards show distance, remaining points, safe metres,
+  excursions and deductions, not foot plants or a happiness multiplier.
+
+### Implementation boundary
+
+`walk_state.gd` owns the 120 Hz accumulator. Its opt-in first-person mode
+couples `path_walk.gd`, the existing dog and equal/opposite rope forces.
+The guide uses friction-limited pacing/centring motors and external slope
+gravity, not a render animation. The default `Walk` and `--walker-only`
+spike preserve their original model and regression fixtures.
+
+`world/walk_view.gd`, `dog_rig.gd`, `park_scenery.gd` and `mesh_builder.gd`
+create original game-owned geometry in an isolated `SubViewport` using
+`gl_compatibility`. They only read model state. This is playable low-poly art,
+not a verified final likeness of Capitan or completion of the old art roadmap.
+No new framework branch, second results system or player-save namespace is added.
+Pickups, other routes, progression, replay, store, gallery and multiplayer
+remain unimplemented. Human playtesting and final reference/voice approvals
+are still release gates.
 
 ---
 

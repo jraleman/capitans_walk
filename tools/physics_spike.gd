@@ -90,13 +90,22 @@ func _on_setting_changed(key: String, _value: Variant) -> void:
 
 
 func _apply_settings() -> void:
+	for binding in Options.PHYSICS_CONTROL_BINDINGS:
+		if binding["action"] in [Options.WHISTLE, Options.RESTART]:
+			continue
+		InputMap.action_erase_events(binding["action"])
+		var key := InputEventKey.new()
+		key.physical_keycode = int(Settings.get_value(binding["key"], binding["default"]))
+		InputMap.action_add_event(binding["action"], key)
 	var labels := PackedStringArray()
-	for binding in Options.LEG_BINDINGS:
-		labels.append(Settings.binding_key_label(binding))
+	for index in Options.LEG_BINDINGS.size():
+		labels.append(OS.get_keycode_string(int(Settings.get_value(
+			Options.LEG_BINDINGS[index], [KEY_Q, KEY_W, KEY_O, KEY_P][index]))))
 	var easy_labels := PackedStringArray()
-	for binding in Options.EASY_BINDINGS:
-		easy_labels.append(Settings.binding_key_label(binding))
-	_body.steady = Settings.tunable(Options.STEADY_KEY)
+	for index in Options.EASY_BINDINGS.size():
+		easy_labels.append(OS.get_keycode_string(int(Settings.get_value(
+			Options.EASY_BINDINGS[index], [KEY_A, KEY_D][index]))))
+	_body.steady = clampf(float(Settings.get_value(Options.STEADY_KEY, 0.0)), 0.0, 1.0)
 	_walk_speed = float(Settings.tunable_choice(Options.WALK_SPEED_KEY)) / 100.0
 	_walk.easy_legs = not _walker_only and Settings.tunable_bool(Options.EASY_LEGS_KEY)
 	_walk.dog.long_warnings = Settings.tunable_bool(Options.LONG_WARNINGS_KEY)

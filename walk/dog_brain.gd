@@ -120,10 +120,12 @@ func step(
 	rope_force: Vector2, leash_length: float,
 	walk_distance := 0.0, walking := false, resting := true,
 	external_force := Vector2.ZERO, focus_position := Vector2.ZERO,
-	focus_enabled := false, allow_distractions := true
+	focus_enabled := false, allow_distractions := true, focus_velocity := Vector2.ZERO,
+	allow_happiness := true
 ) -> void:
 	if not hand.is_finite() or not hand_velocity.is_finite() or not rope_force.is_finite() \
 		or not external_force.is_finite() or not focus_position.is_finite() \
+		or not focus_velocity.is_finite() \
 		or not position.is_finite() or not velocity.is_finite() \
 		or not is_finite(walk_distance) or walk_distance < 0.0 \
 		or not is_finite(happiness) or happiness < 0.0 or happiness > 100.0 \
@@ -137,7 +139,8 @@ func step(
 	_update_whistle(whistle)
 	if allow_distractions or state != TROT:
 		_update_distraction(walking, resting, rope_force)
-	_update_happiness(walking, resting)
+	if allow_happiness:
+		_update_happiness(walking, resting)
 	var target := Vector2(hand.x + leash_length, 0.0)
 	var target_velocity := Vector2(hand_velocity.x, 0.0)
 	var drive := Vector2(profile.trot_pull, 0.0)
@@ -166,7 +169,7 @@ func step(
 		drive = Vector2(45.0 * _lunge_side, 0.0)
 	if focus_enabled and state == TROT and recalls == recalls_before:
 		target = focus_position
-		target_velocity = Vector2.ZERO
+		target_velocity = focus_velocity
 		drive = Vector2.ZERO
 	var steering := profile.mass * (profile.track_spring * (target - position)
 		+ profile.track_damping * (target_velocity - velocity))

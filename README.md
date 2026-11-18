@@ -1,68 +1,90 @@
 # Capitan's Walk
 
-The playable build is a **seeded Park prototype** for the game in
-[DESIGN.md](DESIGN.md). Four independent controls drive real joint motors on a
-narrow, endlessly streamed path with puddles, slopes and telegraphed Park encounters.
-Capitan trots ahead, pulls a spring-damper rope and reacts to five seeded
-distractions. Sniffing, happiness, rhythm points and optional two-key Easy legs
-are playable. There is no canned forward movement.
+**A first-person dog-guidance game in an original low-poly 3D Park.** Walking
+is automatic: steer the leash and Whistle to keep Capitan between the cream
+path edges. Reach the **200 m finish** before your points run out.
 
-Original layered 2D scenery, a clothed walker and a scruffy toy dog follow the
-solver's real joints, contacts and rope. Help reveals the key legends; distance,
-balance, happiness and meaningful cues remain visible. The isolated physics spike
-keeps its diagnostic view. This is presentation polish, not the planned final 3D art.
+Start at **100 points**, earn **one per safe metre**, and lose **ten per
+second** after one continuous second off-path. Returning stops the penalty
+and resets that grace period. Zero points loses; human falls no longer do.
 
-Keyboard, fixed gamepad and independent multitouch controls are playable.
-Other routes, items/events, final 3D art
-and progression are not implemented yet. The working title does not settle
-the owner's final spelling or permanent save-directory decision.
+![The playable first-person Park](assets/video/first_person_poster.webp)
+
+The current owner-approved rules are in [DESIGN section 0](DESIGN.md).
+The older four-key physics model and diagnostic spike remain available;
+they are not the main game. This is playable original art, not Capitan's
+verified final likeness or a release build. Pickups, other routes, progression,
+store and multiplayer remain unimplemented.
 
 ## Controls
 
 | Keyboard | Fixed gamepad | Action |
 | --- | --- | --- |
-| Q | LB | Left thigh forward, right thigh back |
-| W | LT (analogue) | Right thigh forward, left thigh back |
-| O | RB | Bend the left knee, straighten the right |
-| P | RT (analogue) | Bend the right knee, straighten the left |
-| A / D | D-pad left / right | With Easy legs on: choose the left / right motor stride |
+| A / D | Left stick or D-pad left / right | Guide the leash left / right |
 | Space | A | Recall Capitan after 0.3 s; six-second model-time cooldown |
 | R | Y or Back | Restart immediately, including from results |
 | Escape | Start | Pause |
 
-Keyboard actions are rebindable in Settings; gamepad controls are fixed by the
-owner's choice. Triggers preserve feathered strengths, with a small release
-deadzone. One active controller owns the motors until reset or disconnect.
+Keyboard actions are rebindable in Settings; gamepad controls are fixed.
+The left stick preserves analogue strength beyond its release deadzone.
+One active controller owns the controls until reset or disconnect.
 Start also resumes pause and backs out of nested Settings before resuming.
 
 Touch controls appear on touchscreens or the first screen touch on a hybrid
-desktop. Four independent pads keep thighs on the left and calves on the right;
-Whistle, Restart and Pause have their own buttons. Game settings offer
-**Thumbs / Left-handed / Right-handed** layouts. Easy legs replaces the top
-motor pads with left/right stride choices, keeping the two B pads for bracing.
+desktop. Independent left/right steering pads and Whistle, Restart and Pause
+buttons offer **Thumbs / Left-handed / Right-handed** layouts.
 Whistle shows its model-time cooldown and readiness on the button.
 Dragging off releases that finger; another finger on the same pad stays held.
-The controls reserve space below the walker, with a compact landscape HUD.
+The controls reserve space below the 3D view.
 Keyboard, gamepad and touch can coexist without releasing each other's inputs.
 Pause, focus loss and restart clear held controls; touch-layout/viewport changes
 release contacts without releasing the other sources.
 
-Equal opposing strengths cancel.
-Release everything to plant and settle; knee contact alone is legal.
-Capitan's `!`, caption and original warning tone precede his 0.4-second lunge
-by 0.8 seconds. Double stance is safer than striding into the pull. W+P can
-help lean back; the balance strip follows the actual sway. The diagnostic spike
-retains its numeric torso-angle and rope-tension readouts.
-Whistle brings him toward the centre line; release before calling again.
-**Easy legs** plays the authored bend/plant phases on the same four motors.
-Hold each leg for its 0.2-second stride, then choose the other or release.
-Holding both cancels; holding one finishes just one stride, not an automatic
-walk. Manual W+P bracing remains available when the Easy keys are released.
-**Steady** adds torso support, **Walk speed** offers 100%, 85% and 70% model
-time, and **Long warnings** doubles every telegraph, including its remaining
-time when enabled live. None changes the fixed 120 Hz solver.
+Equal opposing strengths cancel. Releasing recentres the leash hand; forward
+walking continues. Whistle returns Capitan physically, never by teleporting.
+Release before calling again.
 
-## The prototype walk
+**Walk speed** offers 100%, 85% and 70% model time. **Long warnings** doubles
+each warning, including its remaining time when enabled live. Both preserve
+the 120 Hz solver; slower pace also slows penalties and cooldowns. The assisted
+badge stays set if either assist was used. Reduced motion parks decorative dog
+animation; the first-person camera has no bob. Help folds key legends, never
+the score, warning captions or active touch pads.
+
+## The first-person walk
+
+Capitan's model centre/collar must stay within the **1.8 m wide path**; touching
+an outer cream edge is safe. Points accrue fractionally each fixed tick and the
+live whole-number score rounds up until it actually reaches zero. Distance
+never decreases, never rewards backtracking and stops at 200 m. Depletion wins
+over reaching the finish on the same tick.
+
+Squirrels, pigeons and friendly dogs tempt him toward the grass. Each
+distraction names its side and the counter-steering direction one second
+before pulling. Watch the dog and red leash; steer against the distraction or
+Whistle. The path gauge and OFF PATH caption show the grace countdown or
+active deduction even with sound and Help off.
+
+The route uses **seed 0**; Restart repeats it. A friction-limited motor paces
+the human along generated slopes and wet patches. The damped hand motor,
+dog steering and spring-damper rope exchange real equal/opposite forces.
+The renderer only reads that state. Legacy sniffing/happiness drain,
+stride combos and human-fall endings are inactive in this mode.
+
+`world\walk_view.gd` owns an isolated perspective viewport using
+`gl_compatibility`. Game-owned meshes supply Capitan, his actual leash and
+the park's trees, flowers, benches, fences, lamps, signs and finish gate.
+The same physical model runs under keyboard, gamepad and touch.
+Shared results retain distance, remaining points, safe metres, excursions
+and deductions. The 200 m length is a first-pass route, not a human-tuned
+progression threshold.
+
+## Legacy diagnostic model
+
+The following describes the retained **side-view model and its regression
+fixtures**, not the current first-person game. The direct spike uses Q/W
+thighs and O/P calves (LB/LT/RB/RT), Space to recall, R to reset and Left/Right
+for development-only sideways tugs. Its default drawing remains diagnostic.
 
 | Icon | Mood | Counter |
 | --- | --- | --- |
@@ -106,11 +128,11 @@ the existing hand/shoulder spring carries the load into the torso.
 The development spike also accepts Left/Right arrow **sideways tugs** to compare
 bracing and striding. Those tugs are not controls in the main game.
 
-## Seeded Park terrain
+### Legacy seeded Park fixtures
 
-The main game currently uses **seed 0**; Restart repeats it. There is no player
-seed/route selector yet. The first 20 m stays flat for the original leash lesson.
-After that, sixteen authored 20 m templates supply three provisional difficulty
+The retained Park generator also supports the original endless model fixtures.
+The first 20 m stays flat for the original leash lesson. After that,
+sixteen authored 20 m templates supply three provisional difficulty
 tiers, wet patches, rises, dips, rest areas and moving encounters. The 50/150 m tier bands
 follow the design, not tuned unlock distances.
 
@@ -178,6 +200,7 @@ godot --headless --path ..\.. --script res://games/capitans_walk/tests/determini
 godot --headless --path ..\.. --script res://games/capitans_walk/tests/leash_test.gd -- --game=all
 godot --headless --path ..\.. --script res://games/capitans_walk/tests/dog_brain_test.gd -- --game=all
 godot --headless --path ..\.. --script res://games/capitans_walk/tests/walk_state_test.gd -- --game=all
+godot --headless --path ..\.. --script res://games/capitans_walk/tests/path_walk_test.gd -- --game=all
 godot --headless --path ..\.. --script res://games/capitans_walk/tests/route_generator_test.gd -- --game=all
 godot --headless --path ..\.. --script res://games/capitans_walk/tests/hazards_test.gd -- --game=all
 godot --headless --path ..\.. --script res://games/capitans_walk/tests/input_sources_test.gd -- --game=all
@@ -189,86 +212,83 @@ player's saves. Include the host's `export_presets.cfg` in that copy. On Windows
 GUI engine binaries require `Start-Process -NoNewWindow -Wait -PassThru`; check
 both exit status and diagnostics. There is no separate linter or formatter.
 
-Verified on Godot 4.7.2: all ten game suites pass. The walker-only binary gait
-**Q+O -> Q+P -> W+P -> W+O**, held for 0.1 s per pair, reaches **13.17 m in
-100 simulated seconds**. Neutral standing survives 100 seconds, repeated
-60-second input streams match exactly, changing gait state matches at
-30/60/144 render FPS, and a three-second hitch discards no model time.
-The scene suite passes headlessly and in a real graphics window, including
-rebinding, live assists, pause, off-path results, in-place restart and
-portrait/landscape/ultrawide HUD bounds and rendered results/stat panels.
-The same physical-key, joystick and multitouch gait reaches **2.13 m in 1571
-fixed ticks**, then a genuine off-path ending and shared results, with identical
-complete model/RNG/scoring snapshots across all three adapters. No fall or pose
-is assigned for those walks. Input tests cover analogue triggers, controller
-ownership/disconnection, independent fingers, mouse emulation, focus cleanup,
-Easy legs and one-shot commands. All three touch layouts have rendered bounds
-and non-overlapping native-button coverage.
-Normal boot -> Play -> Instructions ->
-the running walk, direct spike launch and rendered chunk previews are also verified.
+All eleven game suites pass on Godot 4.7.2. The new path suite pins the exact
+edge, one-second grace, deductions, re-entry, finish/depletion priority,
+30/60/144 FPS equivalence, hitch handling, restart and post-ending freeze.
+Actual steering completes seeds 0, 1 and 731; ignoring distractions loses.
 
-Route tests check four seeds through 4 km, including coincident and adjacent
-event/boss reservations; bounded streaming/backtracking reaches 20 km. Actual
-puddle contacts slide more than dry pavement and do not farm splash events.
-Wet coupled state matches at 30/60/144 FPS, freezes on ending and resets exactly.
-The seed-1 motor gait with warning-triggered recall physically reaches a puddle
-at **31.51 m / 23457 ticks**; no distance, pose or score is assigned.
-Separate, explicitly placed terrain fixtures check rendered puddles/slopes from
-portrait to ultrawide; these are not presented as walked distances.
+The scene suite injects real Godot key, joystick and multitouch events.
+Each source completes **200 m with 300 points in 14273 fixed ticks**, with
+identical complete snapshots and no assigned positions, distance or score.
+It covers rebinding, controller ownership, live assists, nested pause/Settings,
+focus cleanup, a real loss, instant restart and shared results/scorecards.
+Run it without `--headless` to exercise actual Compatibility rendering,
+off-path framing, visible points/cues and fewer than 60 viewport draw calls.
+Phone through ultrawide layouts cover 360x800, 720x1280, 1280x720 and 2560x1080.
+Optional `--capitan-capture=<absolute-path>.png` saves the rendered cases.
 
-Moving-hazard fixtures separately verify real sprinkler sway, backward jogger
-rope force, three flock reversals, settled versus striding greetings, delayed
-recall and caption/audio priority. State matches at 30/60/144 FPS, survives a
-three-second hitch, freezes on ending and remains bounded through 20 km.
-The seed-731 motor walk reaches a generated jogger at **52.09 m / 40595 ticks**,
-releases the motors to brace, and measures **39 N of backward rope force**.
-The same walk runs through the scene's actual input adapter, without assigned
-poses, scores, distance or translation. New actor/warning captures are explicit
-fixtures, not claims of naturally walked kilometres.
+Legacy suites retain the original **13.17 m / 100 s** four-key gait, stable
+neutral stance, physical leash bracing, Easy legs, moods, sniffing and rhythm.
+Route/hazard fixtures still cover seeded seams, bounded 20 km streaming,
+real wet contacts/slopes, telegraphs, sprinkler/jogger/flock/greeting forces,
+delayed recall and deterministic clocks. These do not imply those legacy
+encounters are active in the new main game.
 
-The coupled model preserves exact body/dog/rope/timer/RNG state for 60 seconds,
-agrees at 30/60/144 FPS through a real lunge, and drops no three-second hitch
-time. A graded W+P brace holds **8.6 degrees back** against **17.3 N** of trot
-tension in the earlier leash milestone; at 60 happiness the current brace is
-**8.59 degrees at 17.52 N** and still controls the same real lunge.
-Real rebound Whistle input, delayed recall, pause and complete same-seed
-restart are covered through the gameplay scene.
+Nonfinite-input and damaged-backup tests deliberately log rejected inputs.
+The path suite rejects nonfinite steering; the walk suite rejects invalid
+happiness/profile data; route tests reject nonfinite/reversed bounds.
+Unexpected script, parse or shutdown-resource errors are failures.
+Run all 15 host suites with `--game=all` after manifest or integration changes.
+The current sweep passes 14 of 15: the global instructions-video suite is
+blocked by the unrelated `baloos_chase` manifest's missing tutorial.
+Capitan's new video and poster load successfully in the shared screen.
 
-The two-key authored gait reaches **4.76 m in 30 seconds**, exactly matching
-its four-key equivalent through real recalls. Both modes agree at 30/60/144 FPS
-on physics, mood timers, happiness, contact/score history and macro phase.
-Focused tests cover all five pull shapes, every doubled warning, sniff/protest
-costs, rhythm boundaries and tier banking, released-foot scoring and the
-latched assist badge. Passing foot plants do not silently start a sniff or
-postpone the squirrel lesson.
+These are synthesized events and rendered scene checks, **not human
+playtesting or physical controller/mobile testing**. The original three-person
+physics playtest and a first-person usability pass remain unverified. Do not
+tune progression from automated results; see [TODO.md](TODO.md).
 
-All 15 framework suites pass their assertions, exit 0 and finish without
-unexpected script or shutdown resource errors. The host's Lives/Single-game
-suites now release UI audio before quitting, following its existing test
-teardown pattern. Nonfinite-input and damaged-backup tests deliberately log
-their rejected inputs; the walk suite also rejects invalid happiness/profile
-data without advancing either endpoint, macro or bank. The route suite deliberately
-rejects nonfinite/reversed window bounds without replacing terrain. Unexpected script or
-cleanup errors must not be ignored.
+## First-person walkthrough
 
-These are synthesized Godot events through the real adapters and scenes,
-**not** physical controller/mobile hardware testing or the required three-person playtest.
-The owner explicitly authorized this grey-box milestone before that playtest.
-Beginner time to 5 m, a practised player's best and sideways-fall fairness
-remain unrecorded; progression distances must not be tuned from automated data.
-See [TODO.md](TODO.md) for the remaining playtest gate and later milestones.
+The manifest uses `assets\video\first_person.ogv` and
+`first_person_poster.webp`: a silent 24-second, 960x540, 30 FPS recording of
+the actual scene, not an animation or mock-up. `tools\tutorial_driver.gd`
+drives input through warning, off-path deduction, Whistle, return, steering
+and Restart, and rejects an incomplete take. Its tones are synthesized, not
+recordings of Capitan's bark.
 
-## Prototype walkthrough
+To regenerate, run from an **isolated host copy** with this game linked under
+`games\capitans_walk`, leaving the older poster/cover untouched:
 
-`assets\video\tutorial.ogv` and its WebP poster are original footage of the real
-scene, labelled as a model-driven Park prototype. The game-owned
-`tools\tutorial_driver.gd` plugs into the host's `tools\tutorial_capture.tscn`:
-it remains a keyboard introduction, verifies walking, warning/lunge, whistle recall,
-settling and restart, and never assigns poses or scores. The generated tones
-are placeholders, not recordings of Capitan's bark.
+```powershell
+$avi = Join-Path $env:TEMP "capitan-first-person-$PID.avi"
+$p = Start-Process -FilePath (Get-Command godot).Source -NoNewWindow -Wait -PassThru `
+    -ArgumentList @('--path', '.', '--resolution', '1280x720', '--fixed-fps', '30',
+        '--write-movie', $avi, 'res://tools/tutorial_capture.tscn', '++',
+        '--game=capitans_walk', '--tutorial-variant=solo')
+if ($p.ExitCode -ne 0) { throw 'Tutorial capture failed' }
+ffmpeg -y -i $avi -an -vf scale=960:540:flags=lanczos -r 30 -c:v libtheora -q:v 7 `
+    games\capitans_walk\assets\video\first_person.ogv
+ffmpeg -y -ss 15 -i games\capitans_walk\assets\video\first_person.ogv `
+    -frames:v 1 -c:v libwebp -quality 90 games\capitans_walk\assets\video\first_person_poster.webp
+```
+
+### Preserved legacy artwork
+
+The older `tutorial.ogv`, `tutorial_poster.webp` and square cover remain
+side-view prototype artwork. The following retained commands target those
+**legacy filenames**, not the current first-person media. The shared recorder
+now uses the new driver, so use the explicit commands above for this revision.
 
 Regenerate from the host with `tools\record_tutorials.ps1 -Games capitans_walk`
 or `tools/record_tutorials.sh --games capitans_walk`. Both use the real driver
 and recorder-only caption clearance, encode Theora at 960x540, 30 FPS, quality 7,
-and extract a 640x360 WebP poster at 9 seconds.
+and extract a closer 960x540 WebP poster at 9.1 seconds.
 Audio is intentionally omitted; the captions carry the lesson.
+Use `-PostersOnly` / `--posters-only` to refresh that still without rerecording.
+
+The square `assets\cover.png` also uses the actual Park view and an unsaved
+solver pose, explicitly labelled as a prototype. Its game-owned
+`tools\cover_art.gd` is rendered from the host with
+`godot --path . --script res://tools/render_covers.gd -- --game=all --games=capitans_walk`.
+It does not imply the planned final 3D art.
